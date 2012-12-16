@@ -1,0 +1,23 @@
+OASISFormat: 0.3
+Name: tptp
+Version: 0.1.0
+Synopsis: Parse TPTP format (FOF, CNF)
+Authors: Radek Micek
+Copyrights: (c) 2012 Radek Micek
+License: MIT
+LicenseFile: LICENSE
+Plugins: META (0.3)
+BuildTools: ocamlbuild
+
+Library tptp
+  Path: src
+  Modules: Ast, Parser, Lexer
+  BuildDepends: zarith
+  Pack: true
+
+Document "api-tptp"
+  Title: API reference for TPTP
+  Type: ocamlbuild (0.3)
+  BuildTools+: ocamldoc
+  XOCamlbuildLibraries: tptp
+  XOCamlbuildPath: src

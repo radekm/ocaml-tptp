@@ -1,0 +1,22 @@
+# OASIS_START
+# DO NOT EDIT (digest: c97de3ddd37e8c5291632244d368c4dd)
+# Ignore VCS directories, you can use the same kind of rule outside 
+# OASIS_START/STOP if you want to exclude directories that contains 
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library tptp
+"src/tptp.cmxs": use_tptp
+"src/ast.cmx": for-pack(Tptp)
+"src/parser.cmx": for-pack(Tptp)
+"src/lexer.cmx": for-pack(Tptp)
+<src/*.ml{,i}>: pkg_zarith
+# OASIS_STOP

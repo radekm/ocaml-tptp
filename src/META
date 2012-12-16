@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 46e0d1a81858eccb24deea935d20c33f)
+version = "0.1.0"
+description = "Parse TPTP format (FOF, CNF)"
+requires = "zarith"
+archive(byte) = "tptp.cma"
+archive(byte, plugin) = "tptp.cma"
+archive(native) = "tptp.cmxa"
+archive(native, plugin) = "tptp.cmxs"
+exists_if = "tptp.cma"
+# OASIS_STOP
+
