@@ -5,4 +5,4 @@
 (** [token inside lexbuf] reads token from [lexbuf]. [inside] flag denotes
    whether we are inside formula and if so all comments will be skipped.
 *)
-val token : bool ref -> Lexing.lexbuf -> Parser.token
+val token : bool ref -> Lexing.lexbuf -> Tptp_parser.token

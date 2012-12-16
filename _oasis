@@ -11,9 +11,8 @@ BuildTools: ocamlbuild
 
 Library tptp
   Path: src
-  Modules: Ast, Parser, Lexer
+  Modules: Tptp_ast, Tptp_parser, Tptp_lexer
   BuildDepends: zarith
-  Pack: true
 
 Document "api-tptp"
   Title: API reference for TPTP

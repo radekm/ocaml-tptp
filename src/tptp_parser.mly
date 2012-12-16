@@ -2,7 +2,7 @@
 
 %{
 
-open Ast
+open Tptp_ast
 
 let string_to_role : string -> formula_role = function
   | "axiom" -> R_axiom
@@ -56,7 +56,7 @@ let term_to_atom : term -> atom = function
 %token EOF
 
 %start tptp_input
-%type <Ast.tptp_input option> tptp_input
+%type <Tptp_ast.tptp_input option> tptp_input
 
 %%
 

@@ -1,6 +1,6 @@
 {
 
-open Parser
+open Tptp_parser
 
 (* Parses decimal number without exponent. *)
 let parse_decimal_fraction (str : string) : Q.t =
