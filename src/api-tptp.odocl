@@ -1,6 +1,7 @@
 # OASIS_START
-# DO NOT EDIT (digest: 52aee80c88f15a02a0c62f5c3fe09655)
+# DO NOT EDIT (digest: e4e6e21bc48fb4eb252ea081bcbdb752)
 Tptp_ast
 Tptp_parser
 Tptp_lexer
+Tptp
 # OASIS_STOP
