@@ -20,3 +20,13 @@ Document "api-tptp"
   BuildTools+: ocamldoc
   XOCamlbuildLibraries: tptp
   XOCamlbuildPath: src
+
+Executable test
+  Path: test
+  MainIs: test.ml
+  BuildDepends: tptp, oUnit
+  Install: false
+  Build$: flag(tests)
+
+Test main
+  Command: $test

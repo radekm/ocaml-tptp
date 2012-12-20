@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 1f01b9be783ac8bdafbc0d2e8f037e6b) *)
+(* DO NOT EDIT (digest: a1bd86401c80794c709b950c5fad403c) *)
 module OASISGettext = struct
 (* # 21 "/home/abuild/rpmbuild/BUILD/oasis-0.3.0/src/oasis/OASISGettext.ml" *)
 
@@ -480,7 +480,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml = [("tptp", ["src"])];
      lib_c = [];
      flags = [];
-     includes = [];
+     includes = [("test", ["src"])];
      }
   ;;
 
