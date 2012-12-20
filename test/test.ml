@@ -41,6 +41,15 @@ let assert_parses_and_raises ast str =
     | Some (Tptp.Parse_error (_, _)) -> ()
     | Some e -> raise e
 
+let assert_raises_failure (f : unit -> 'a) : unit =
+  let raised =
+    try
+      f ();
+      false
+    with Failure _ -> true in
+  if not raised then
+    assert_failure "Failure not raised"
+
 let test_parse_fof1 () =
   let str = "fof(1, axiom, p(X))." in
 
@@ -597,15 +606,81 @@ let test_reject_comment_block_inv_char () =
 let test_parse_annotations () =
   skip_if true ""
 
-(* TODO: Test following functions for failure:
+let test_to_var_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_var "");
+  assert_raises_failure (fun () ->
+    to_var "x");
+  assert_raises_failure (fun () ->
+    to_var "_X");
+  assert_raises_failure (fun () ->
+    to_var "123");
+  assert_raises_failure (fun () ->
+    to_var "X-Y");
+  assert_raises_failure (fun () ->
+    to_var "$foo")
 
-     to_var
-     to_plain_word
-     to_defined_word
-     to_system_word
-     to_tptp_string
-     to_comment_line
-*)
+let test_to_plain_word_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_plain_word "");
+  assert_raises_failure (fun () ->
+    to_plain_word "\n");
+  assert_raises_failure (fun () ->
+    to_plain_word "foo\144");
+  assert_raises_failure (fun () ->
+    to_plain_word "hello\tworld")
+
+let test_to_defined_word_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_defined_word "");
+  assert_raises_failure (fun () ->
+    to_defined_word "a");
+  assert_raises_failure (fun () ->
+    to_defined_word "$");
+  assert_raises_failure (fun () ->
+    to_defined_word "A");
+  assert_raises_failure (fun () ->
+    to_defined_word "$A");
+  assert_raises_failure (fun () ->
+    to_defined_word "$$a");
+  assert_raises_failure (fun () ->
+    to_defined_word "$_a")
+
+let test_to_system_word_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_system_word "");
+  assert_raises_failure (fun () ->
+    to_system_word "$");
+  assert_raises_failure (fun () ->
+    to_system_word "$$");
+  assert_raises_failure (fun () ->
+    to_system_word "$$A");
+  assert_raises_failure (fun () ->
+    to_system_word "$$$a");
+  assert_raises_failure (fun () ->
+    to_system_word "a")
+
+let test_to_tptp_string_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_tptp_string "\031");
+  assert_raises_failure (fun () ->
+    to_tptp_string "hello\255");
+  assert_raises_failure (fun () ->
+    to_tptp_string "\n");
+  assert_raises_failure (fun () ->
+    to_tptp_string "\t");
+  assert_raises_failure (fun () ->
+    to_tptp_string "\r")
+
+let test_to_comment_line_rejects_invalid_str () =
+  assert_raises_failure (fun () ->
+    to_comment_line "\n");
+  assert_raises_failure (fun () ->
+    to_comment_line "\r");
+  assert_raises_failure (fun () ->
+    to_comment_line "\000");
+  assert_raises_failure (fun () ->
+    to_comment_line "\031")
 
 let suite =
   "suite" >:::
@@ -660,6 +735,18 @@ let suite =
       "reject comment block with invalid character" >::
         test_reject_comment_block_inv_char;
       "parse annotations" >:: test_parse_annotations;
+      "to_var rejects invalid string" >::
+        test_to_var_rejects_invalid_str;
+      "to_plain_word rejects invalid string" >::
+        test_to_plain_word_rejects_invalid_str;
+      "to_defined_word rejects invalid string" >::
+        test_to_defined_word_rejects_invalid_str;
+      "to_system_word rejects invalid string" >::
+        test_to_system_word_rejects_invalid_str;
+      "to_tptp_string rejects invalid string" >::
+        test_to_tptp_string_rejects_invalid_str;
+      "to_comment_line rejects invalid string" >::
+        test_to_comment_line_rejects_invalid_str;
     ]
 
 (* TODO: Add option to test parser by parsing all FOF and CNF problems in TPTP. *)
