@@ -1,3 +1,4 @@
+(* Copyright (c) 2012 Radek Micek *)
 
 open OUnit
 open Tptp_ast

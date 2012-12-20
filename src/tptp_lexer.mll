@@ -1,3 +1,5 @@
+(* Copyright (c) 2012 Radek Micek *)
+
 {
 
 open Tptp_parser
