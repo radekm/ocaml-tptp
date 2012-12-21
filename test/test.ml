@@ -13,6 +13,9 @@ let with_dispose dispose f x =
   dispose x;
   result
 
+(* ************************************************************************* *)
+(* Unit tests *)
+
 let parse_lexbuf lexbuf =
   let rec loop acc input =
     try
@@ -749,6 +752,109 @@ let suite =
         test_to_comment_line_rejects_invalid_str;
     ]
 
-(* TODO: Add option to test parser by parsing all FOF and CNF problems in TPTP. *)
-let _ =
-  run_test_tt_main suite
+(* ************************************************************************* *)
+(* Parsing TPTP problems in given directory *)
+
+exception Line_found
+
+let exists_line f file =
+  let rec test_lines in_chan : unit =
+    if f (input_line in_chan) then
+      raise Line_found
+    else
+      test_lines in_chan in
+
+  try
+    with_dispose close_in test_lines (open_in file);
+    failwith "Unreachable"
+  with
+    | End_of_file -> false
+    | Line_found -> true
+
+let combine_path a b = a ^ "/" ^ b
+
+let is_prefix_of pref str =
+  let pref_len = String.length pref in
+  let str_len = String.length str in
+  str_len >= pref_len &&
+  String.sub str 0 pref_len = pref
+
+let parse_tptp_problem file =
+  let rec parse_all input =
+    match Tptp.read input with
+      | None -> ()
+      | Some _ -> parse_all input in
+
+  with_dispose
+    close_in
+    (fun in_chan ->
+      with_dispose
+        Tptp.close_in
+        parse_all
+        (Tptp.create_in (Lexing.from_channel in_chan)))
+    (open_in file)
+
+(* Parses all files in given directory and its subdirectories
+   which don't contain line starting with "thf(" or "tff(".
+
+   Progress is reported to standard output.
+*)
+let parse_tptp_problems dir =
+  let nparsed = ref 0 in
+  let nfailed = ref 0 in
+  let nskipped = ref 0 in
+
+  let thf_or_tff_file =
+    exists_line (fun ln -> is_prefix_of "thf(" ln || is_prefix_of "tff(" ln) in
+
+  let rec parse_dir dir =
+    let items = Sys.readdir dir in
+    Array.iter (fun i ->
+      let i = combine_path dir i in
+      if Sys.is_directory i then
+        parse_dir i
+      else if thf_or_tff_file i then begin
+        incr nskipped;
+        print_string "S";
+        flush stdout
+      end else begin
+        try
+          parse_tptp_problem i;
+          incr nparsed;
+          print_string ".";
+          flush stdout
+        with
+          | Tptp.Parse_error (_, msg) ->
+              incr nfailed;
+              Printf.printf "\n%s: %s\n" i msg;
+              flush stdout
+      end) items in
+
+  parse_dir dir;
+
+  print_newline ();
+  Printf.printf "Parsed %d problems\n" !nparsed;
+  Printf.printf "Failed %d problems\n" !nfailed;
+  Printf.printf "Skipped %d problems\n" !nskipped
+
+(* ************************************************************************* *)
+(* Main *)
+
+let () =
+  let dir = ref None in
+  Arg.parse
+    [
+      "-d",
+      Arg.String (fun s -> dir := Some s),
+      "<dir>  Parse problems in directory <dir> and its subdirectories";
+    ]
+    (fun _ -> failwith "Invalid argument")
+    "Test runner for TPTP library";
+
+  match !dir with
+    | None ->
+        Printf.printf "Running unit tests\n";
+        ignore (run_test_tt suite)
+    | Some d ->
+        Printf.printf "Parsing problems in %s\n" d;
+        parse_tptp_problems d
