@@ -599,9 +599,65 @@ let test_keywords_in_comments () =
 
   assert_parses ast str
 
-(* TODO *)
 let test_parse_annotations () =
-  skip_if true ""
+  let str = String.concat "\n" [
+    "fof(4,axiom,( ";
+    "    ? [X3] : ";
+    "      ( human(X3) ";
+    "      & grade(X3) = a ) ), ";
+    "    file('CreatedEqual.p',someone_got_an_a)). ";
+
+    "fof(16,plain, ";
+    "    ( human(esk1_0) ";
+    "    & grade(esk1_0) = a ), ";
+    "    inference(skolemize,[status(sab)],[4])). ";
+  ] in
+
+  let human t = Pred (Plain_word (to_plain_word "human"), [t]) in
+  let grade t = Func (Plain_word (to_plain_word "grade"), [t]) in
+  let x3' = to_var "X3" in
+  let x3 = Var x3' in
+  let a = Func (Plain_word (to_plain_word "a"), []) in
+  let esk1_0 = Func (Plain_word (to_plain_word "esk1_0"), []) in
+
+  let ast = [
+    Fof_anno {
+      af_name = N_integer (Z.of_int 4);
+      af_role = R_axiom;
+      af_formula =
+        Formula (Quant (Exists, x3',
+          Binop (And,
+            Atom (human x3),
+            Atom (Equals (grade x3, a)))));
+      af_annos = Some {
+        a_source = G_data (G_func ((to_plain_word "file"), [
+          G_data (G_func (to_plain_word "CreatedEqual.p", []));
+          G_data (G_func (to_plain_word "someone_got_an_a", []));
+        ]));
+        a_useful_info = [];
+      };
+    };
+    Fof_anno {
+      af_name = N_integer (Z.of_int 16);
+      af_role = R_plain;
+      af_formula =
+        Formula (Binop (And,
+          Atom (human esk1_0),
+          Atom (Equals (grade esk1_0, a))));
+      af_annos = Some {
+        a_source = G_data (G_func ((to_plain_word "inference"), [
+          G_data (G_func (to_plain_word "skolemize", []));
+          G_list [G_data (G_func (to_plain_word "status",
+            [G_data (G_func (to_plain_word "sab", []))]))
+          ];
+          G_list [G_data (G_number (Q.of_int 4))];
+        ]));
+        a_useful_info = [];
+      };
+    };
+  ] in
+
+  assert_parses ast str
 
 let test_to_var_rejects_invalid_str () =
   assert_raises_failure (fun () ->
