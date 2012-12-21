@@ -125,7 +125,9 @@ and system_word = private string
 *)
 and tptp_string = private string
 
-(** Printable characters (code >= 32) or tabs (empty string allowed). *)
+(** Printable ASCII characters (code >= 32 && code <= 126)
+   or tabs (empty string allowed).
+*)
 and comment_line = private string
 
 (** In TPTP: [name]. *)

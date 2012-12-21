@@ -543,8 +543,8 @@ let test_parse_comment_line () =
   assert_parses ast str
 
 let test_inv_char_terminates_comment_line () =
-  let str = "% hello \255\032\254\020" in
-  let ast = [ Comment (to_comment_line " hello \255\032\254") ] in
+  let str = "% hello \126\032\254" in
+  let ast = [ Comment (to_comment_line " hello \126\032") ] in
   assert_parses_and_raises ast str
 
 let test_skip_comment_line_inside_formula () =
@@ -598,12 +598,6 @@ let test_keywords_in_comments () =
   ] in
 
   assert_parses ast str
-
-(* TODO: Update lexer or remove this test. *)
-let test_reject_comment_block_inv_char () =
-  skip_if true "";
-  let str = "/* \000 */" in
-  assert_parses_and_raises [] str
 
 (* TODO *)
 let test_parse_annotations () =
@@ -683,6 +677,10 @@ let test_to_comment_line_rejects_invalid_str () =
   assert_raises_failure (fun () ->
     to_comment_line "\000");
   assert_raises_failure (fun () ->
+    to_comment_line "\127");
+  assert_raises_failure (fun () ->
+    to_comment_line "\255");
+  assert_raises_failure (fun () ->
     to_comment_line "\031")
 
 let suite =
@@ -735,8 +733,6 @@ let suite =
       "reject unclosed comment block" >::
         test_reject_unclosed_comment_block;
       "keywords in comments" >:: test_keywords_in_comments;
-      "reject comment block with invalid character" >::
-        test_reject_comment_block_inv_char;
       "parse annotations" >:: test_parse_annotations;
       "to_var rejects invalid string" >::
         test_to_var_rejects_invalid_str;

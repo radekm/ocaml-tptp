@@ -184,4 +184,4 @@ let to_tptp_string str =
   check_suffix 0 (fun c -> c >= '\032' && c <= '\126') str
 
 let to_comment_line str =
-  check_suffix 0 (fun c -> c >= '\032' || c = '\t') str
+  check_suffix 0 (fun c -> (c >= '\032' && c <= '\126') || c = '\t') str

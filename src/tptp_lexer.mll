@@ -150,7 +150,7 @@ rule token inside = parse
       { EQUALS }
   | "!="
       { EXCLAMATION_EQUALS }
-  | "%" (['\t' '\032'-'\255']* as x)
+  | "%" (['\t' '\032'-'\126']* as x)
       { if not !inside then COMMENT x else token inside lexbuf }
   | "/*"
       { skip_comment_block inside lexbuf }
