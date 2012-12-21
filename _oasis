@@ -5,7 +5,7 @@ Synopsis: TPTP format parsing
 Authors: Radek Micek
 Copyrights: (c) 2012 Radek Micek
 License: MIT
-LicenseFile: LICENSE
+LicenseFile: LICENSE.txt
 Plugins: META (0.3), StdFiles (0.3)
 BuildTools: ocamlbuild
 
