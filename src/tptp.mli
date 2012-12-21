@@ -1,6 +1,21 @@
 (* Copyright (c) 2012 Radek Micek *)
 
-(** Friendly interface for reading TPTP format. *)
+(** Reading FOF and CNF formulas in TPTP format.
+
+   Note 1: This library supports only FOF and CNF formulas.
+   Keywords and other constructions used for representation
+   of other formulas are not supported.
+   This besides other things means that strings ["thf"],
+   ["tff"], ["$thf"] and ["$tff"] are not treated as
+   keywords and can be used as ordinary functors
+   (for example [to_defined_word "$thf"] does not fail).
+
+   Note 2: Comment lines can contain tabs. Comment blocks
+   can contain non-printable characters and non-ASCII characters.
+
+   Note 3: Comment blocks are ignored and comment lines inside formulas
+   are ignored too.
+*)
 
 exception Input_closed
 
