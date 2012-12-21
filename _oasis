@@ -1,13 +1,18 @@
 OASISFormat: 0.3
 Name: tptp
 Version: 0.1.0
-Synopsis: Parse TPTP format (FOF, CNF)
+Synopsis: TPTP format parsing
 Authors: Radek Micek
 Copyrights: (c) 2012 Radek Micek
 License: MIT
 LicenseFile: LICENSE
-Plugins: META (0.3)
+Plugins: META (0.3), StdFiles (0.3)
 BuildTools: ocamlbuild
+
+Description:
+  tptp is library for parsing FOF and CNF formulas from TPTP format.
+  Library can parse all TPTP problems which don't contain line
+  starting with "thf(" or "tff(".
 
 Library tptp
   Path: src
@@ -24,7 +29,7 @@ Document "api-tptp"
 Executable test
   Path: test
   MainIs: test.ml
-  BuildDepends: tptp, oUnit
+  BuildDepends: tptp, zarith, oUnit
   Install: false
   Build$: flag(tests)
 
