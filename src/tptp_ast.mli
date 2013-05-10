@@ -1,4 +1,4 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012-2013 Radek Micek *)
 
 (** AST for FOF and CNF formulas. *)
 
@@ -16,6 +16,9 @@ and 't annotated_formula = {
   af_annos : annotations option;
 }
 
+(** Note: TPTP can distinguish between no useful info and empty useful info.
+   But here are both represented by the empty list.
+*)
 and annotations = {
   a_source : gterm;
   a_useful_info : gterm list;

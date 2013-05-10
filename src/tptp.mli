@@ -1,6 +1,6 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012-2013 Radek Micek *)
 
-(** Reading FOF and CNF formulas in TPTP format.
+(** Reading and writing FOF and CNF formulas in TPTP format.
 
    Note 1: This library supports only FOF and CNF formulas.
    Keywords and other constructions used for representation
@@ -33,3 +33,5 @@ val create_in : Lexing.lexbuf -> input
 val read : input -> Tptp_ast.tptp_input option
 
 val close_in : input -> unit
+
+val write : Buffer.t -> Tptp_ast.tptp_input -> unit

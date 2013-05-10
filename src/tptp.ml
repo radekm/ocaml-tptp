@@ -1,4 +1,4 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012-2013 Radek Micek *)
 
 exception Input_closed
 exception Parse_error of Lexing.position * string
@@ -27,3 +27,5 @@ let read input =
         raise (Parse_error (input.in_lexbuf.Lexing.lex_curr_p, "Syntax error"))
 
 let close_in input = input.in_closed <- true
+
+let write b tptp_input = Tptp_printer.print_tptp_input b tptp_input

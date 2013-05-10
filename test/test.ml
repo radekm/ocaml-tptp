@@ -1,4 +1,4 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012-2013 Radek Micek *)
 
 open OUnit
 open Tptp_ast
@@ -739,6 +739,35 @@ let test_to_comment_line_rejects_invalid_str () =
   assert_raises_failure (fun () ->
     to_comment_line "\031")
 
+let test_print_cnf () =
+  let ast =
+    let p = Pred (Plain_word (to_plain_word "p"), []) in
+    let q a b = Pred (Plain_word (to_plain_word "q"), [a; b]) in
+    let fof a = Func (Plain_word (to_plain_word "fof"), [a]) in
+    let c = Func (Plain_word (to_plain_word "c"), []) in
+    let x = Var (to_var "X") in
+    let y = Var (to_var "Y") in
+    Cnf_anno {
+      af_name = N_word (to_plain_word "foo_bar");
+      af_role = R_negated_conjecture;
+      af_formula = Clause [
+        Lit (Pos, p);
+        Lit (Neg, Equals (fof x, c));
+        Lit (Neg, q x y);
+        Lit (Pos, Equals (y, x));
+      ];
+      af_annos = None;
+    } in
+
+  let str =
+    let f = "p | 'fof'(X) != c | ~q(X, Y) | Y = X" in
+    "cnf(foo_bar, negated_conjecture, " ^ f ^ ").\n" in
+
+  let buf = Buffer.create 100 in
+  Tptp.write buf ast;
+
+  assert_equal str (Buffer.contents buf)
+
 let suite =
   "suite" >:::
     [
@@ -802,6 +831,7 @@ let suite =
         test_to_tptp_string_rejects_invalid_str;
       "to_comment_line rejects invalid string" >::
         test_to_comment_line_rejects_invalid_str;
+      "print CNF" >:: test_print_cnf;
     ]
 
 (* ************************************************************************* *)
@@ -831,20 +861,41 @@ let is_prefix_of pref str =
   str_len >= pref_len &&
   String.sub str 0 pref_len = pref
 
-let parse_tptp_problem file =
-  let rec parse_all input =
-    match Tptp.read input with
-      | None -> ()
-      | Some _ -> parse_all input in
+exception Tptp_input_not_preserved
 
-  with_dispose
-    close_in
-    (fun in_chan ->
-      with_dispose
-        Tptp.close_in
-        parse_all
-        (Tptp.create_in (Lexing.from_channel in_chan)))
-    (open_in file)
+let parse_tptp_problem file =
+  let rec parse_all acc input =
+    match Tptp.read input with
+      | None -> List.rev acc
+      | Some item ->
+          parse_all (item :: acc) input in
+
+  (* Read items from file. *)
+  let items =
+    with_dispose
+      close_in
+      (fun in_chan ->
+        with_dispose
+          Tptp.close_in
+          (parse_all [])
+          (Tptp.create_in (Lexing.from_channel in_chan)))
+      (open_in file) in
+
+  (* Write items to string. *)
+  let buf = Buffer.create 1024 in
+  List.iter (Tptp_printer.print_tptp_input buf) items;
+  let str = Buffer.contents buf in
+  Buffer.reset buf;
+
+  (* Read items from string. *)
+  let items' =
+    with_dispose
+      Tptp.close_in
+      (parse_all [])
+      (Tptp.create_in (Lexing.from_string str)) in
+
+  if items <> items' then
+    raise Tptp_input_not_preserved
 
 (* Parses all files in given directory and its subdirectories
    which don't contain line starting with "thf(" or "tff(".
@@ -879,6 +930,10 @@ let parse_tptp_problems dir =
           | Tptp.Parse_error (_, msg) ->
               incr nfailed;
               Printf.printf "\n%s: %s\n" i msg;
+              flush stdout
+          | Tptp_input_not_preserved ->
+              incr nfailed;
+              Printf.printf "\n%s: %s\n" i "input not preserved";
               flush stdout
       end) items in
 
