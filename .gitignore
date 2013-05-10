@@ -4,3 +4,6 @@ setup.log
 *.docdir
 test.native
 test.byte
+
+# Backup files
+*.*~
