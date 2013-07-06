@@ -105,7 +105,34 @@ let rec print_fof_formula b = function
       print_list b "[" "]" ", " fs print_formula;
       Buffer.add_string b " --> ";
       print_list b "[" "]" ", " fs' print_formula
-  | Formula f -> print_formula b f
+  | Formula f ->
+      if not (print_lit_conj_or_disj b f) then
+        print_formula b f
+
+and print_lit_conj_or_disj b f =
+  let is_lit = function
+    | Not (Atom _)
+    | Atom _ -> true
+    | _ -> false in
+  let get_lits_sep_by op f =
+    let lits = ref [] in
+    let rec get_lits = function
+      | Binop (op', f, f') ->
+          op' = op &&
+          (get_lits f) &&
+          (get_lits f')
+      | f -> is_lit f && (lits := f :: !lits; true) in
+    if get_lits f
+    then Some (List.rev !lits)
+    else None in
+  let print_lits op lits =
+    print_list b "\n  " "\n" ("  " ^ op ^ "\n  ") lits print_formula in
+  match get_lits_sep_by Or f with
+    | Some lits -> print_lits "|" lits; true
+    | None ->
+  match get_lits_sep_by And f with
+    | Some lits -> print_lits "&" lits; true
+    | None -> false
 
 (* TODO:
    - Reduce use of parentheses.
