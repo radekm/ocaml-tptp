@@ -179,7 +179,10 @@ and print_formula b = function
       print_atom b a
 
 and print_cnf_formula b (Clause lits) =
-  print_list b "" "" " | " lits print_literal
+  match lits with
+    (* Empty clause. *)
+    | [] -> Buffer.add_string b "$false"
+    | _ -> print_list b "" "" " | " lits print_literal
 
 and print_literal b = function
   | Lit (sign, Equals (l, r)) -> print_equals_fol b sign l r

@@ -21,6 +21,11 @@ let string_to_role : string -> formula_role = function
   | "unknown" -> R_unknown
   | _ -> failwith "Unrecognized formula role"
 
+let proc_literals = function
+  | [ Lit (sign, Pred (Defined_word pred, [])) ]
+    when (pred :> string) = "$false" -> []
+  | lits -> List.rev lits
+
 let term_to_atom : term -> atom = function
   | Func (pred, args) -> Pred (pred, args)
   | Var _
@@ -187,9 +192,9 @@ fof_tuple_list:
 
 cnf_formula:
 | LPAR disjunction RPAR
-    { Clause (List.rev $2) }
+    { Clause (proc_literals $2) }
 | disjunction
-    { Clause (List.rev $1) }
+    { Clause (proc_literals $1) }
 
 disjunction:
 | literal
