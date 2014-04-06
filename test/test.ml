@@ -763,10 +763,7 @@ let test_print_cnf () =
     let f = "p | 'fof'(X) != c | ~q(X, Y) | Y = X" in
     "cnf(foo_bar, negated_conjecture, " ^ f ^ ").\n" in
 
-  let buf = Buffer.create 100 in
-  Tptp.write buf ast;
-
-  assert_equal str (Buffer.contents buf)
+  assert_equal str (Tptp.to_string ast)
 
 let suite =
   "suite" >:::
@@ -945,23 +942,61 @@ let parse_tptp_problems dir =
   Printf.printf "Skipped %d problems\n" !nskipped
 
 (* ************************************************************************* *)
+(* Parsing TPTP input from string *)
+
+let parse_tptp_string str =
+  let asts, exn = parse_string str in
+  match exn with
+    | Some e ->
+        Printf.printf "Exception raised: %s\n" (Printexc.to_string e)
+    | None ->
+        (* Pretty-print parsed input. *)
+        let str2 =
+          let buf = Buffer.create 1024 in
+          List.iter (Tptp.write buf) asts;
+          Buffer.contents buf in
+
+        Printf.printf "Parsed %d inputs:\n%s\n" (List.length asts) str2;
+
+        (* Parse after pretty-printing. *)
+        match parse_string str2 with
+          | asts2, None ->
+              if asts = asts2 then
+                print_endline "Pretty-printing preserves input"
+              else
+                print_endline "Input is not preserved by pretty-printing"
+          | _, Some e ->
+              Printf.printf
+                "Exception raised when parsing after pretty-printing: %s\n"
+                (Printexc.to_string e)
+
+(* ************************************************************************* *)
 (* Main *)
 
 let () =
   let dir = ref None in
+  let str = ref None in
   Arg.parse
     [
       "-d",
       Arg.String (fun s -> dir := Some s),
       "<dir>  Parse problems in directory <dir> and its subdirectories";
+      "-s",
+      Arg.String (fun s -> str := Some s),
+      "<str>  Parse string <str> and then pretty-print it";
     ]
     (fun _ -> failwith "Invalid argument")
     "Test runner for TPTP library";
 
   match !dir with
-    | None ->
-        Printf.printf "Running unit tests\n";
-        ignore (run_test_tt suite)
     | Some d ->
         Printf.printf "Parsing problems in %s\n" d;
         parse_tptp_problems d
+    | None ->
+  match !str with
+    | Some s ->
+        Printf.printf "Parsing string:\n%s\n\n" s;
+        parse_tptp_string s
+    | None ->
+        Printf.printf "Running unit tests\n";
+        ignore (run_test_tt suite)
