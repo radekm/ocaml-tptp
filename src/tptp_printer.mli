@@ -4,25 +4,25 @@
 
 (** {6 Printing non-terminals to buffer} *)
 
-val print_tptp_input : Buffer.t -> Tptp_ast.tptp_input -> unit
+val print_tptp_input : Tptp_ast.tptp_input -> PPrint.document
 
-val print_fof_formula : Buffer.t -> Tptp_ast.fof_formula -> unit
+val print_fof_formula : Tptp_ast.fof_formula -> PPrint.document
 
-val print_formula : Buffer.t -> Tptp_ast.formula -> unit
+val print_formula : Tptp_ast.formula -> PPrint.document
 
-val print_cnf_formula : Buffer.t -> Tptp_ast.cnf_formula -> unit
+val print_cnf_formula : Tptp_ast.cnf_formula -> PPrint.document
 
-val print_literal : Buffer.t -> Tptp_ast.literal -> unit
+val print_literal : Tptp_ast.literal -> PPrint.document
 
-val print_atom : Buffer.t -> Tptp_ast.atom -> unit
+val print_atom : Tptp_ast.atom -> PPrint.document
 
-val print_term : Buffer.t -> Tptp_ast.term -> unit
+val print_term : Tptp_ast.term -> PPrint.document
 
-val print_gterm : Buffer.t -> Tptp_ast.gterm -> unit
+val print_gterm : Tptp_ast.gterm -> PPrint.document
 
-val print_gdata : Buffer.t -> Tptp_ast.gdata -> unit
+val print_gdata : Tptp_ast.gdata -> PPrint.document
 
-val print_gformula : Buffer.t -> Tptp_ast.gformula -> unit
+val print_gformula : Tptp_ast.gformula -> PPrint.document
 
 (** {6 Writing terminals to string} *)
 

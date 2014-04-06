@@ -883,7 +883,7 @@ let parse_tptp_problem file =
 
   (* Write items to string. *)
   let buf = Buffer.create 1024 in
-  List.iter (Tptp_printer.print_tptp_input buf) items;
+  List.iter (Tptp.write buf) items;
   let str = Buffer.contents buf in
   Buffer.reset buf;
 

@@ -28,4 +28,5 @@ let read input =
 
 let close_in input = input.in_closed <- true
 
-let write b tptp_input = Tptp_printer.print_tptp_input b tptp_input
+let write b tptp_input =
+  PPrint.ToBuffer.pretty 1. 80 b (Tptp_printer.print_tptp_input tptp_input)

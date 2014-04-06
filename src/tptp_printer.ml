@@ -2,19 +2,16 @@
 
 open Tptp_ast
 
+module PP = PPrint
+
+let (^^) = PP.(^^)
+
 (* ************************************************************************ *)
 
-let print_items b sep (items : 'a list) (p : Buffer.t -> 'a -> unit) =
-  match items with
-    | [] -> ()
-    | x :: xs ->
-        p b x;
-        List.iter (fun a -> Buffer.add_string b sep; p b a) xs
-
-let print_list b ldelim rdelim sep items p =
-  Buffer.add_string b ldelim;
-  print_items b sep items p;
-  Buffer.add_string b rdelim
+let print_list ldelim rdelim sep items p =
+  PP.string ldelim ^^
+  PP.separate_map (PP.string sep) p items ^^
+  PP.string rdelim
 
 (* ************************************************************************ *)
 (* Terminals *)
@@ -100,16 +97,17 @@ let show_formula_role = function
 (* ************************************************************************ *)
 (* Non-terminals *)
 
-let rec print_fof_formula b = function
+let rec print_fof_formula = function
   | Sequent (fs, fs') ->
-      print_list b "[" "]" ", " fs print_formula;
-      Buffer.add_string b " --> ";
-      print_list b "[" "]" ", " fs' print_formula
+      print_list "[" "]" ", " fs print_formula ^^
+      PP.string " --> " ^^
+      print_list "[" "]" ", " fs' print_formula
   | Formula f ->
-      if not (print_lit_conj_or_disj b f) then
-        print_formula b f
+      match print_lit_conj_or_disj f with
+        | None -> print_formula f
+        | Some x -> x
 
-and print_lit_conj_or_disj b f =
+and print_lit_conj_or_disj f =
   let is_lit = function
     | Not (Atom _)
     | Atom _ -> true
@@ -126,25 +124,29 @@ and print_lit_conj_or_disj b f =
     then Some (List.rev !lits)
     else None in
   let print_lits op lits =
-    print_list b "\n  " "\n" ("  " ^ op ^ "\n  ") lits print_formula in
+    let ldelim = PP.hardline ^^ PP.string "  " in
+    let sep = PP.string ("  " ^ op) ^^ ldelim in
+    let rdelim = PP.hardline in
+    ldelim ^^
+    PP.separate_map sep print_formula lits ^^
+    rdelim in
   match get_lits_sep_by Or f with
-    | Some lits -> print_lits "|" lits; true
+    | Some lits -> Some (print_lits "|" lits)
     | None ->
   match get_lits_sep_by And f with
-    | Some lits -> print_lits "&" lits; true
-    | None -> false
+    | Some lits -> Some (print_lits "&" lits)
+    | None -> None
 
 (* TODO:
    - Reduce use of parentheses.
    - Group consecutive variables quantified by the same quantifier
      into one list.
 *)
-and print_formula b = function
+and print_formula = function
   | Binop (op, f, f') ->
-      Buffer.add_char b '(';
-      print_formula b f;
-      Buffer.add_string b ") ";
-      Buffer.add_string b
+      PP.parens (print_formula f) ^^
+      PP.space ^^
+      PP.string
         begin match op with
           | Equiv -> "<=>"
           | Implies -> "=>"
@@ -154,93 +156,91 @@ and print_formula b = function
           | Nand -> "~&"
           | Or -> "|"
           | And -> "&"
-        end;
-      Buffer.add_string b " (";
-      print_formula b f';
-      Buffer.add_char b ')'
+        end ^^
+      PP.space ^^
+      PP.parens (print_formula f')
   | Not (Atom (Equals (l, r))) ->
-      print_equals_fol b Neg l r
+      print_equals_fol Neg l r
   | Not f ->
-      Buffer.add_string b "~(";
-      print_formula b f;
-      Buffer.add_char b ')'
+      PP.tilde ^^
+      PP.parens (print_formula f)
   | Quant (q, v, f) ->
-      Buffer.add_char b
+      PP.char
         begin match q with
           | All -> '!'
           | Exists -> '?'
-        end;
-      Buffer.add_char b '[';
-      Buffer.add_string b (show_var v);
-      Buffer.add_string b "] : (";
-      print_formula b f;
-      Buffer.add_char b ')'
+        end ^^
+      PP.brackets (PP.string (show_var v)) ^^
+      PP.string " : " ^^
+      PP.parens (print_formula f)
   | Atom a ->
-      print_atom b a
+      print_atom a
 
-and print_cnf_formula b (Clause lits) =
+and print_cnf_formula (Clause lits) =
   match lits with
     (* Empty clause. *)
-    | [] -> Buffer.add_string b "$false"
-    | _ -> print_list b "" "" " | " lits print_literal
+    | [] -> PP.string "$false"
+    | _ -> print_list "" "" " | " lits print_literal
 
-and print_literal b = function
-  | Lit (sign, Equals (l, r)) -> print_equals_fol b sign l r
+and print_literal = function
+  | Lit (sign, Equals (l, r)) -> print_equals_fol sign l r
   | Lit (sign, atom) ->
-      if sign = Neg then
-        Buffer.add_char b '~';
-      print_atom b atom
+      (match sign with
+        | Pos -> PP.empty
+        | Neg -> PP.tilde) ^^
+      print_atom atom
 
 (* Prints (negated) equality atom. *)
-and print_equals_fol b sign l r =
-  print_term b l;
-  Buffer.add_char b ' ';
-  if sign = Neg then
-    Buffer.add_char b '!';
-  Buffer.add_string b "= ";
-  print_term b r
+and print_equals_fol sign l r =
+  print_term l ^^
+  PP.space ^^
+  (match sign with
+    | Pos -> PP.empty
+    | Neg -> PP.bang) ^^
+  PP.string "= " ^^
+  print_term r
 
-and print_atom b = function
+and print_atom = function
   | Equals (l, r) ->
-      print_equals_fol b Pos l r
+      print_equals_fol Pos l r
   | Pred (p, args) ->
-      Buffer.add_string b (show_atomic_word p);
+      PP.string (show_atomic_word p) ^^
       begin match args with
-        | [] -> ()
-        | _ -> print_list b "(" ")" ", " args print_term
+        | [] -> PP.empty
+        | _ -> print_list "(" ")" ", " args print_term
       end
 
-and print_term b = function
-  | Var v -> Buffer.add_string b (show_var v)
+and print_term = function
+  | Var v -> PP.string (show_var v)
   | Func (f, args) ->
-      Buffer.add_string b (show_atomic_word f);
+      PP.string (show_atomic_word f) ^^
       begin match args with
-        | [] -> ()
-        | _ -> print_list b "(" ")" ", " args print_term
+        | [] -> PP.empty
+        | _ -> print_list "(" ")" ", " args print_term
       end
-  | Number n -> Buffer.add_string b (show_number n)
-  | String s -> Buffer.add_string b (show_tptp_string s)
+  | Number n -> PP.string (show_number n)
+  | String s -> PP.string (show_tptp_string s)
 
-let rec print_tptp_input b node =
+let rec print_tptp_input node =
   let print_anno_formula kw name role formula print_formula annos =
-    Buffer.add_string b kw;
-    Buffer.add_char b '(';
-    Buffer.add_string b (show_formula_name name);
-    Buffer.add_string b ", ";
-    Buffer.add_string b (show_formula_role role);
-    Buffer.add_string b ", ";
-    print_formula b formula;
+    PP.string kw ^^
+    PP.char '(' ^^
+    PP.string (show_formula_name name) ^^
+    PP.string ", " ^^
+    PP.string (show_formula_role role) ^^
+    PP.string ", " ^^
+    print_formula formula ^^
     match annos with
-      | None -> Buffer.add_string b ")."
+      | None -> PP.string ")."
       | Some annos ->
-          Buffer.add_string b ", ";
-          print_gterm b annos.a_source;
+          PP.string ", " ^^
+          print_gterm annos.a_source ^^
           match annos.a_useful_info with
-            | [] -> Buffer.add_string b ")."
+            | [] -> PP.string ")."
             | _ ->
-                Buffer.add_string b ", ";
-                print_list b "[" "]" ", " annos.a_useful_info print_gterm;
-                Buffer.add_string b ")." in
+                PP.string ", " ^^
+                print_list "[" "]" ", " annos.a_useful_info print_gterm ^^
+                PP.string ")." in
   begin match node with
     | Fof_anno f ->
         print_anno_formula "fof"
@@ -249,52 +249,52 @@ let rec print_tptp_input b node =
         print_anno_formula "cnf"
           f.af_name f.af_role f.af_formula print_cnf_formula f.af_annos
     | Include (file, names) ->
-        Buffer.add_string b "include(";
-        Buffer.add_string b (show_file_name file);
+        PP.string "include(" ^^
+        PP.string (show_file_name file) ^^
         begin match names with
-          | [] -> ()
+          | [] -> PP.empty
           | _ ->
-              Buffer.add_string b ", ";
-              print_list b "[" "]" ", " names
-                (fun b n -> Buffer.add_string b (show_formula_name n))
-        end;
-        Buffer.add_string b ")."
+              PP.string ", " ^^
+              print_list "[" "]" ", " names
+                (fun n -> PP.string (show_formula_name n))
+        end ^^
+        PP.string ")."
     | Comment s ->
-        Buffer.add_char b '%';
-        Buffer.add_string b (show_comment_line s)
-  end;
-  Buffer.add_char b '\n'
+        PP.char '%' ^^
+        PP.string (show_comment_line s)
+  end ^^
+  PP.hardline
 
-and print_gterm b = function
-  | G_data d -> print_gdata b d
+and print_gterm = function
+  | G_data d -> print_gdata d
   | G_cons (d, t) ->
-      print_gdata b d;
-      Buffer.add_string b " : ";
-      print_gterm b t
-  | G_list ts -> print_list b "[" "]" ", " ts print_gterm
+      print_gdata d ^^
+      PP.string " : " ^^
+      print_gterm t
+  | G_list ts -> print_list "[" "]" ", " ts print_gterm
 
-and print_gdata b = function
+and print_gdata = function
   | G_func (f, args) ->
-      Buffer.add_string b (show_plain_word f);
+      PP.string (show_plain_word f) ^^
       begin match args with
-        | [] -> ()
-        | _ -> print_list b "(" ")" ", " args print_gterm
+        | [] -> PP.empty
+        | _ -> print_list "(" ")" ", " args print_gterm
       end
-  | G_var v -> Buffer.add_string b (show_var v)
-  | G_number n -> Buffer.add_string b (show_number n)
-  | G_string s -> Buffer.add_string b (show_tptp_string s)
-  | G_formula f -> print_gformula b f
+  | G_var v -> PP.string (show_var v)
+  | G_number n -> PP.string (show_number n)
+  | G_string s -> PP.string (show_tptp_string s)
+  | G_formula f -> print_gformula f
 
-and print_gformula b = function
+and print_gformula = function
   | G_fof f ->
-      Buffer.add_string b "$fof(";
-      print_fof_formula b f;
-      Buffer.add_char b ')'
+      PP.string "$fof(" ^^
+      print_fof_formula f ^^
+      PP.char ')'
   | G_cnf f ->
-      Buffer.add_string b "$cnf(";
-      print_cnf_formula b f;
-      Buffer.add_char b ')'
+      PP.string "$cnf(" ^^
+      print_cnf_formula f ^^
+      PP.char ')'
   | G_fot t ->
-      Buffer.add_string b "$fot(";
-      print_term b t;
-      Buffer.add_char b ')'
+      PP.string "$fot(" ^^
+      print_term t ^^
+      PP.char ')'

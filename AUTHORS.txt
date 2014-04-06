@@ -1,5 +1,8 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 81ad8a096f051e09a4c2ea47c550992c) *)
-Authors of tptp
-Radek Micek
+(* DO NOT EDIT (digest: fdb9a58aea2b48e62fd3ba4120e7c51c) *)
+
+Authors of tptp:
+
+* Radek Micek
+
 (* OASIS_STOP *)

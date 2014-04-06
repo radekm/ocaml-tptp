@@ -3,7 +3,7 @@ Name: tptp
 Version: 0.2.0
 Synopsis: TPTP format parsing
 Authors: Radek Micek
-Copyrights: (c) 2012-2013 Radek Micek
+Copyrights: (c) 2012-2014 Radek Micek
 License: MIT
 LicenseFile: LICENSE.txt
 Plugins: META (0.3), StdFiles (0.3)
@@ -17,7 +17,7 @@ Description:
 Library tptp
   Path: src
   Modules: Tptp_ast, Tptp_parser, Tptp_lexer, Tptp_printer, Tptp
-  BuildDepends: zarith
+  BuildDepends: zarith, pprint
 
 Document "api-tptp"
   Title: API reference for TPTP

@@ -1,17 +1,20 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 433db3b50e800276aef93d20157659c6) *)
+(* DO NOT EDIT (digest: 49d0fbff955ca36add537936df403fe7) *)
+
 This is the INSTALL file for the tptp distribution.
 
 This package uses OASIS to generate its build system. See section OASIS for
-full information. 
+full information.
 
 Dependencies
 ============
 
 In order to compile this package, you will need:
+
 * ocaml for all, test main, doc api-tptp
 * findlib
 * zarith
+* pprint for library tptp
 * oUnit for executable test
 
 Installing
@@ -25,7 +28,7 @@ Installing
 Uninstalling
 ============
 
-1. Go to the root of the package 
+1. Go to the root of the package
 2. Run 'ocaml setup.ml -uninstall'
 
 OASIS
