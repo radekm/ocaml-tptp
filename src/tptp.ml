@@ -30,3 +30,8 @@ let close_in input = input.in_closed <- true
 
 let write b tptp_input =
   PPrint.ToBuffer.pretty 1. 80 b (Tptp_printer.print_tptp_input tptp_input)
+
+let to_string tptp_input =
+  let b = Buffer.create 100 in
+  write b tptp_input;
+  Buffer.contents b

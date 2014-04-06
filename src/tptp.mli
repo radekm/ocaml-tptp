@@ -35,3 +35,5 @@ val read : input -> Tptp_ast.tptp_input option
 val close_in : input -> unit
 
 val write : Buffer.t -> Tptp_ast.tptp_input -> unit
+
+val to_string : Tptp_ast.tptp_input -> string
