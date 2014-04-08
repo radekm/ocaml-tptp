@@ -99,55 +99,24 @@ let show_formula_role = function
 
 let rec print_fof_formula = function
   | Sequent (fs, fs') ->
-      print_list "[" "]" ", " fs print_formula ^^
+      print_list "[" "]" ", " fs (print_formula ~unitary:false) ^^
       PP.string " --> " ^^
-      print_list "[" "]" ", " fs' print_formula
+      print_list "[" "]" ", " fs' (print_formula ~unitary:false)
   | Formula f ->
-      match print_lit_conj_or_disj f with
-        | None -> print_formula f
-        | Some x -> x
-
-and print_lit_conj_or_disj f =
-  let is_lit = function
-    | Not (Atom _)
-    | Atom _ -> true
-    | _ -> false in
-  let get_lits_sep_by op f =
-    let lits = ref [] in
-    let rec get_lits = function
-      | Binop (op', f, f') ->
-          op' = op &&
-          (get_lits f) &&
-          (get_lits f')
-      | f -> is_lit f && (lits := f :: !lits; true) in
-    if get_lits f
-    then Some (List.rev !lits)
-    else None in
-  let print_lits op lits =
-    let ldelim = PP.hardline ^^ PP.string "  " in
-    let sep = PP.string ("  " ^ op) ^^ ldelim in
-    let rdelim = PP.hardline in
-    ldelim ^^
-    PP.separate_map sep print_formula lits ^^
-    rdelim in
-  match get_lits_sep_by Or f with
-    | Some lits -> Some (print_lits "|" lits)
-    | None ->
-  match get_lits_sep_by And f with
-    | Some lits -> Some (print_lits "&" lits)
-    | None -> None
+      print_formula ~unitary:false f
 
 (* TODO:
-   - Reduce use of parentheses.
    - Group consecutive variables quantified by the same quantifier
      into one list.
 *)
-and print_formula = function
+and print_formula ?(unitary = true) = function
   | Binop (op, f, f') ->
-      PP.parens (print_formula f) ^^
-      PP.space ^^
-      PP.string
-        begin match op with
+      let assoc =
+        match op with
+          | Equiv | Implies | Implies_rev | Xor | Nor | Nand -> false
+          | Or | And -> true in
+      let op =
+        match op with
           | Equiv -> "<=>"
           | Implies -> "=>"
           | Implies_rev -> "<="
@@ -155,15 +124,20 @@ and print_formula = function
           | Nor -> "~|"
           | Nand -> "~&"
           | Or -> "|"
-          | And -> "&"
-        end ^^
-      PP.space ^^
-      PP.parens (print_formula f')
+          | And -> "&" in
+      let l = print_formula ~unitary:(not assoc) f in
+      let r = print_formula f' in
+      let wrap =
+        if unitary then
+          PP.parens
+        else
+          (fun x -> x) in
+      wrap (l ^^ PP.space ^^ PP.string op ^^ PP.space ^^ r)
   | Not (Atom (Equals (l, r))) ->
       print_equals_fol Neg l r
   | Not f ->
       PP.tilde ^^
-      PP.parens (print_formula f)
+      print_formula f
   | Quant (q, v, f) ->
       PP.char
         begin match q with
@@ -172,7 +146,7 @@ and print_formula = function
         end ^^
       PP.brackets (PP.string (show_var v)) ^^
       PP.string " : " ^^
-      PP.parens (print_formula f)
+      print_formula f
   | Atom a ->
       print_atom a
 
