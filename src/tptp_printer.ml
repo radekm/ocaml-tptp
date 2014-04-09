@@ -105,10 +105,6 @@ let rec print_fof_formula = function
   | Formula f ->
       print_formula ~unitary:false f
 
-(* TODO:
-   - Group consecutive variables quantified by the same quantifier
-     into one list.
-*)
 and print_formula ?(unitary = true) = function
   | Binop (op, f, f') ->
       let assoc =
@@ -138,13 +134,19 @@ and print_formula ?(unitary = true) = function
   | Not f ->
       PP.tilde ^^
       print_formula f
-  | Quant (q, v, f) ->
+  | Quant (q, _, _) as f ->
+      (* [vars] - consecutive variables quantified by [q]. *)
+      let vars, f =
+        let rec group_vars xs = function
+          | Quant (q', x, f) when q = q' -> group_vars (x :: xs) f
+          | f -> (List.rev xs, f) in
+        group_vars [] f in
       PP.char
         begin match q with
           | All -> '!'
           | Exists -> '?'
         end ^^
-      PP.brackets (PP.string (show_var v)) ^^
+      print_list "[" "]" ", " vars (fun v -> PP.string (show_var v)) ^^
       PP.string " : " ^^
       print_formula f
   | Atom a ->
