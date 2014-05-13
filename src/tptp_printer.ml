@@ -128,7 +128,7 @@ and print_formula ?(unitary = true) = function
           PP.parens
         else
           (fun x -> x) in
-      wrap (l ^^ PP.space ^^ PP.string op ^^ PP.space ^^ r)
+      wrap (PP.infix 2 1 (PP.string op) l r)
   | Not (Atom (Equals (l, r))) ->
       print_equals_fol Neg l r
   | Not f ->
