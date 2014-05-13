@@ -953,7 +953,7 @@ let parse_tptp_string str =
         (* Pretty-print parsed input. *)
         let str2 =
           let buf = Buffer.create 1024 in
-          List.iter (Tptp.write buf) asts;
+          List.iter (Tptp.write ~width:20 buf) asts;
           Buffer.contents buf in
 
         Printf.printf "Parsed %d inputs:\n%s\n" (List.length asts) str2;

@@ -34,6 +34,12 @@ val read : input -> Tptp_ast.tptp_input option
 
 val close_in : input -> unit
 
-val write : Buffer.t -> Tptp_ast.tptp_input -> unit
+(** The parameter [width] is the maximum number of characters per line.
+   The parameter [rfrac] is the ribbon width, a fraction relative to [width].
+   The ribbon width is the maximum number of non-indentation characters
+   per line.
+*)
+val write :
+  ?rfrac:float -> ?width:int -> Buffer.t -> Tptp_ast.tptp_input -> unit
 
 val to_string : Tptp_ast.tptp_input -> string
