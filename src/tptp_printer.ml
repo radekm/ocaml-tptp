@@ -1,4 +1,4 @@
-(* Copyright (c) 2013 Radek Micek *)
+(* Copyright (c) 2013-2014 Radek Micek *)
 
 open Tptp_ast
 
@@ -97,20 +97,35 @@ let show_formula_role = function
 (* ************************************************************************ *)
 (* Non-terminals *)
 
+type formula_form =
+  | F_unitary
+  | F_or
+  | F_and
+  | F_any
+
 let rec print_fof_formula = function
   | Sequent (fs, fs') ->
-      print_list "[" "]" ", " fs (print_formula ~unitary:false) ^^
+      print_list "[" "]" ", " fs (print_formula ~form:F_any) ^^
       PP.string " --> " ^^
-      print_list "[" "]" ", " fs' (print_formula ~unitary:false)
+      print_list "[" "]" ", " fs' (print_formula ~form:F_any)
   | Formula f ->
-      print_formula ~unitary:false f
+      print_formula ~form:F_any f
 
-and print_formula ?(unitary = true) = function
+and print_formula ?(form = F_unitary) = function
   | Binop (op, f, f') ->
-      let assoc =
-        match op with
-          | Equiv | Implies | Implies_rev | Xor | Nor | Nand -> false
-          | Or | And -> true in
+      let l =
+        let form =
+          match op with
+            | Equiv | Implies | Implies_rev | Xor | Nor | Nand -> F_unitary
+            | Or -> F_or
+            | And -> F_and in
+        print_formula ~form f in
+      let r = print_formula f' in
+      let wrap =
+        match op, form with
+          (* No parens around resulting formula. *)
+          | Or, F_or | And, F_and | _, F_any -> (fun x -> x)
+          | _, _ -> PP.parens in
       let op =
         match op with
           | Equiv -> "<=>"
@@ -121,13 +136,6 @@ and print_formula ?(unitary = true) = function
           | Nand -> "~&"
           | Or -> "|"
           | And -> "&" in
-      let l = print_formula ~unitary:(not assoc) f in
-      let r = print_formula f' in
-      let wrap =
-        if unitary then
-          PP.parens
-        else
-          (fun x -> x) in
       wrap (PP.infix 2 1 (PP.string op) l r)
   | Not (Atom (Equals (l, r))) ->
       print_equals_fol Neg l r

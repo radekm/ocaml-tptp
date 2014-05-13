@@ -8,7 +8,13 @@ val print_tptp_input : Tptp_ast.tptp_input -> PPrint.document
 
 val print_fof_formula : Tptp_ast.fof_formula -> PPrint.document
 
-val print_formula : ?unitary:bool -> Tptp_ast.formula -> PPrint.document
+type formula_form =
+  | F_unitary
+  | F_or
+  | F_and
+  | F_any
+
+val print_formula : ?form:formula_form -> Tptp_ast.formula -> PPrint.document
 
 val print_cnf_formula : Tptp_ast.cnf_formula -> PPrint.document
 
