@@ -1,4 +1,4 @@
-(* Copyright (c) 2012-2013 Radek Micek *)
+(* Copyright (c) 2012-2014 Radek Micek *)
 
 open OUnit
 open Tptp_ast
@@ -307,9 +307,23 @@ let test_parse_real_with_exp () =
 
   assert_parses ast str
 
-let test_reject_keyword_as_pred () =
+let test_parse_keyword_as_pred () =
   let str = "fof(0, axiom, cnf(X))." in
-  assert_parses_and_raises [] str
+
+  let ast = [
+    Fof_anno {
+      af_name = N_integer Z.zero;
+      af_role = R_axiom;
+      af_formula =
+        Formula
+          (Atom (Pred (
+            Plain_word (to_plain_word "cnf"),
+            [Var (to_var "X")])));
+      af_annos = None;
+    };
+  ] in
+
+  assert_parses ast str
 
 let test_parse_single_quoted () =
   let str = "cnf(' \\'hello world\\'', axiom, '\\\\')." in
@@ -760,7 +774,7 @@ let test_print_cnf () =
     } in
 
   let str =
-    let f = "p | 'fof'(X) != c | ~q(X, Y) | Y = X" in
+    let f = "p | fof(X) != c | ~q(X, Y) | Y = X" in
     "cnf(foo_bar, negated_conjecture, " ^ f ^ ").\n" in
 
   assert_equal str (Tptp.to_string ast)
@@ -783,7 +797,7 @@ let suite =
       "parse real" >:: test_parse_real;
       "reject invalid real" >:: test_reject_invalid_real;
       "parse real with exponent" >:: test_parse_real_with_exp;
-      "reject keyword as predicate" >:: test_reject_keyword_as_pred;
+      "parse keyword as predicate" >:: test_parse_keyword_as_pred;
       "parse single-quoted" >:: test_parse_single_quoted;
       "parse single-quoted with keywords" >:: test_parse_single_quoted_with_kwds;
       "reject empty single-quoted" >:: test_reject_empty_single_quoted;

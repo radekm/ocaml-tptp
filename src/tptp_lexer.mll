@@ -1,4 +1,4 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012, 2014 Radek Micek *)
 
 {
 
@@ -93,11 +93,23 @@ let integer = sign? unsigned_integer
 (* Comments inside formulas are ignored. *)
 rule token inside = parse
   | "fof"
-      { inside := true; FOF_KW }
+      {
+        if !inside
+        then LOWER_WORD (Lexing.lexeme lexbuf)
+        else (inside := true; FOF_KW)
+      }
   | "cnf"
-      { inside := true; CNF_KW }
+      {
+        if !inside
+        then LOWER_WORD (Lexing.lexeme lexbuf)
+        else (inside := true; CNF_KW)
+      }
   | "include"
-      { inside := true; INCLUDE_KW }
+      {
+        if !inside
+        then LOWER_WORD (Lexing.lexeme lexbuf)
+        else (inside := true; INCLUDE_KW)
+      }
   | "$fof"
       { DOLLAR_FOF_KW }
   | "$cnf"

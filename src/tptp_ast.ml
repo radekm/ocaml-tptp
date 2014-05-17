@@ -1,4 +1,4 @@
-(* Copyright (c) 2012 Radek Micek *)
+(* Copyright (c) 2012, 2014 Radek Micek *)
 
 type tptp_input =
   | Fof_anno of fof_formula annotated_formula
@@ -89,9 +89,6 @@ and atomic_word =
 
 and var = string
 
-(* Keywords (fof, cnf, include, $fof, $cnf, $fot) are allowed
-   but must be placed in single quotes.
-*)
 and plain_word = string
 
 (* Keywords ($fof, $cnf, $fot) are not allowed. *)

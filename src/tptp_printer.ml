@@ -43,11 +43,7 @@ let show_plain_word (s : plain_word) =
   if
     (* s is lower word. *)
     (s.[0] >= 'a' && s.[0] <= 'z') &&
-    is_alpha_numeric 1 &&
-    (* s isn't keyword. *)
-    s <> "fof" &&
-    s <> "cnf" &&
-    s <> "include"
+    is_alpha_numeric 1
   then
     s
   else
