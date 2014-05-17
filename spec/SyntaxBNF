@@ -1,4 +1,4 @@
-%----v5.4.0.0 (TPTP version.internal development number)
+%----v6.0.0.0 (TPTP version.internal development number)
 %------------------------------------------------------------------------------
 %----README ... this header provides important meta- and usage information
 %----
@@ -36,8 +36,10 @@
 
 %----Formula records
 <annotated_formula>  ::= <thf_annotated> | <tff_annotated> | <fof_annotated> |
-                         <cnf_annotated>
+                         <cnf_annotated> | <tpi_annotated> 
 %----Future languages may include ...  english | efof | tfof | mathml | ...
+<tpi_annotated>      ::= tpi(<name>,<formula_role>,<tpi_formula><annotations>).
+<tpi_formula>        ::= <fof_formula>
 <thf_annotated>      ::= thf(<name>,<formula_role>,<thf_formula><annotations>).
 <tff_annotated>      ::= tff(<name>,<formula_role>,<tff_formula><annotations>).
 <fof_annotated>      ::= fof(<name>,<formula_role>,<fof_formula><annotations>).
@@ -85,6 +87,8 @@
 <thf_logic_formula>  ::= <thf_binary_formula> | <thf_unitary_formula> |
                          <thf_type_formula> | <thf_subtype>
 <thf_binary_formula> ::= <thf_binary_pair> | <thf_binary_tuple> |
+%----<thf_binary_type> should not be used at the top level. It is needed here
+%----for other uses of <thf_logic_formula>.
                          <thf_binary_type>
 %----Only some binary connectives can be written without ()s.
 %----There's no precedence among binary connectives
@@ -130,15 +134,17 @@
 <thf_let_formula_defn> ::= <thf_quantified_formula>
 <thf_let_term_defn>  :== ! [<thf_variable_list>] : <thf_let_term_binding> |
                          <thf_let_term_binding>
-<thf_let_term_binding> :== <thf_let_lhs> = <thf_unitary_formula>
+<thf_let_term_binding> :== <thf_let_lhs> = <thf_unitary_formula> |
+                         (<thf_let_term_binding>)
 <thf_let_formula_defn> :== ! [<thf_variable_list>] : <thf_let_formula_binding> |
                          <thf_let_formula_binding>
-<thf_let_formula_binding> :== <thf_let_lhs> <=> <thf_unitary_formula>
+<thf_let_formula_binding> :== <thf_let_lhs> <=> <thf_unitary_formula> |
+                         (<thf_let_formula_binding>)
 %----A <thf_let_lhs> must be a <constant>, or an application of a <constant> to 
 %----pairwise distinct variables that appear in the <thf_variable_list>.
 <thf_let_lhs>        :== <constant> | <thf_apply_formula>
 
-%----This is mt experimentation
+%----This is my experimentation
 % <thf_let>            ::= <thf_let_binder>(<thf_let_defn>,<thf_formula>)
 % <thf_let_binder>     ::= $let_tf | $let_ff
 % <thf_let_defn>       ::= <thf_unitary_formula>
@@ -225,15 +231,16 @@
                          <tff_logic_formula>)
 <tff_let>            ::= $let_tf(<tff_let_term_defn>,<tff_formula>) |
                          $let_ff(<tff_let_formula_defn>,<tff_formula>)
-%----The LHS of a <tff_let_term_biding> or a <tff_let_formula_binding> must be
+%----The LHS of a <tff_let_term_binding> or a <tff_let_formula_binding> must be
 %----flat with pairwise distinct variable arguments, and the variables on the
 %----LHS must be those bound in the <tff_variable_list>.
-<tff_let_term_defn>  ::= ! [<tff_variable_list>] : <tff_let_term_binding> |
+<tff_let_term_defn>  ::= ! [<tff_variable_list>] : <tff_let_term_defn> |
                          <tff_let_term_binding>
-<tff_let_term_binding> ::= <term> = <term>
-<tff_let_formula_defn> ::= ! [<tff_variable_list>] : <tff_let_formula_binding> |
+<tff_let_term_binding> ::= <term> = <term> | (<tff_let_term_binding>)
+<tff_let_formula_defn> ::= ! [<tff_variable_list>] : <tff_let_formula_defn> |
                          <tff_let_formula_binding>
-<tff_let_formula_binding> ::= <atomic_formula> <=> <tff_unitary_formula>
+<tff_let_formula_binding> ::= <atomic_formula> <=> <tff_unitary_formula> |
+                         (<tff_let_formula_binding>)
 
 <tff_sequent>        ::= <tff_tuple> <gentzen_arrow> <tff_tuple> |
                          (<tff_sequent>)
@@ -251,9 +258,8 @@
 
 %----See <thf_top_level_type> for commentary. <tff_quantified_type> is TFF1.
 <tff_top_level_type> ::= <tff_atomic_type> | <tff_mapping_type> |
-                         <tff_quantified_type>
-<tff_quantified_type> ::= !> [<tff_variable_list>] : <tff_monotype> |
-                          (<tff_quantified_type>)
+                         <tff_quantified_type> | (<tff_top_level_type>)
+<tff_quantified_type> ::= !> [<tff_variable_list>] : <tff_monotype>
 <tff_monotype>       ::= <tff_atomic_type> | (<tff_mapping_type>)
 <tff_unitary_type>   ::= <tff_atomic_type> | (<tff_xprod_type>)
 <tff_atomic_type>    ::= <atomic_word> | <defined_type> | 
@@ -265,11 +271,9 @@
 %----ambiguity.
 %----For Josef Urban, change <atomic_word> to <tff_unitary_formula>, and leave
 %----out <defined_type> (to avoid conflict on <atomic_defined_word>.
-<tff_mapping_type>   ::= <tff_unitary_type> <arrow> <tff_atomic_type> |
-                         (<tff_mapping_type>)
-<tff_xprod_type>     ::= <tff_atomic_type> <star> <tff_atomic_type> |
-                         <tff_xprod_type> <star> <tff_atomic_type> |
-                         (<tff_xprod_type>)
+<tff_mapping_type>   ::= <tff_unitary_type> <arrow> <tff_atomic_type>
+<tff_xprod_type>     ::= <tff_unitary_type> <star> <tff_atomic_type> |
+                         <tff_xprod_type> <star> <tff_atomic_type>
 
 %----The types of the <defined_atom>s and <defined_prop>s are:
 %----    <real> : $real
@@ -384,8 +388,9 @@
 <defined_pred>       :== $distinct |
                          $less | $lesseq | $greater | $greatereq |
                          $is_int | $is_rat
-%----$distinct means that each of it's arguments are pairwise !=. It is part
-%----of the TFF syntax.
+%----$distinct means that each of it's constant arguments are pairwise !=. It 
+%----is part of the TFF syntax. It can be used only as a fact, not under any 
+%----connective.
 <defined_infix_formula>  ::= <term> <defined_infix_pred> <term>
 <defined_infix_pred> ::= <infix_equality>
 <infix_equality>     ::= =
@@ -453,13 +458,15 @@
 %----identified by a <name> or an <inference_record>
 <dag_source>         :== <name> | <inference_record>
 <inference_record>   :== inference(<inference_rule>,<useful_info>,
-                             [<parent_list>])
+                         <inference_parents>)
 <inference_rule>     :== <atomic_word>
 %----Examples are        deduction | modus_tollens | modus_ponens | rewrite |
 %                        resolution | paramodulation | factorization |
 %                        cnf_conversion | cnf_refutation | ...
-%----<parent_list> cannot be empty. Formulae introduced without parents must
-%----use an <internal_source>
+%----<inference_parents> can be empty in cases when there is a justification
+%----for a tautologous theorem. In case when a tautology is introduced as
+%----a leaf, e.g., for splitting, then use an <internal_source>.
+<inference_parents>  :== [] | [<parent_list>]
 <parent_list>        :== <parent_info> | <parent_info>,<parent_list>
 <parent_info>        :== <source><parent_details>
 <parent_details>     :== :<general_list> | <null>
