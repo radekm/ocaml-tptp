@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 6562b1bd214c5fc5dc2ac2ac1224f2f9)
-version = "0.2.0"
+# DO NOT EDIT (digest: f311d0bcc91764de5cc5a3a487046d8b)
+version = "0.3.0"
 description = "TPTP format parsing"
 requires = "zarith pprint"
 archive(byte) = "tptp.cma"

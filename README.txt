@@ -1,12 +1,12 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: f12d7dac3bf023b09aed3abedf6f5d89) *)
+(* DO NOT EDIT (digest: f0e6bc4bfd38f9d9fac0776162a4cc2b) *)
 
 tptp - TPTP format parsing
 ==========================
 
 tptp is a library for reading and writing FOF and CNF formulas in TPTP
-format. Library can process all TPTP problems which don't contain line
-starting with "thf(" or "tff(".
+format. Library can process all problems and axioms from TPTP 6.0.0 which
+don't contain line starting with "thf(" or "tff(".
 
 See the file [INSTALL.txt](INSTALL.txt) for building and installation
 instructions.
