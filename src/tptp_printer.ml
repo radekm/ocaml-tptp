@@ -164,7 +164,11 @@ and print_cnf_formula (Clause lits) =
   match lits with
     (* Empty clause. *)
     | [] -> PP.string "$false"
-    | _ -> print_list "" "" " | " lits print_literal
+    | l :: ls ->
+        List.fold_left
+          (fun acc l -> PP.infix 2 1 (PP.char '|') acc (print_literal l))
+          (print_literal l)
+          ls
 
 and print_literal = function
   | Lit (sign, Equals (l, r)) -> print_equals_fol sign l r
