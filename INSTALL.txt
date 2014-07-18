@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 49d0fbff955ca36add537936df403fe7) *)
+(* DO NOT EDIT (digest: 43b6921c6d85f779cdb71626555dec1d) *)
 
 This is the INSTALL file for the tptp distribution.
 
@@ -15,6 +15,8 @@ In order to compile this package, you will need:
 * findlib
 * zarith
 * pprint for library tptp
+* menhirLib for library tptp
+* menhir for library tptp
 * oUnit for executable test
 
 Installing

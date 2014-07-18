@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: e453026e6dda49a5866aafd28265a2f9)
+# DO NOT EDIT (digest: 85a68fd4dc3c8431a002084cae0ee8e1)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -15,15 +15,20 @@
 "_darcs": not_hygienic
 # Library tptp
 "src/tptp.cmxs": use_tptp
+<src/*.ml{,i}>: pkg_menhirLib
 <src/*.ml{,i}>: pkg_pprint
 <src/*.ml{,i}>: pkg_zarith
 # Executable test
+"test/test.byte": pkg_menhirLib
 "test/test.byte": pkg_oUnit
 "test/test.byte": pkg_pprint
 "test/test.byte": pkg_zarith
 "test/test.byte": use_tptp
+<test/*.ml{,i}>: pkg_menhirLib
 <test/*.ml{,i}>: pkg_oUnit
 <test/*.ml{,i}>: pkg_pprint
 <test/*.ml{,i}>: pkg_zarith
 <test/*.ml{,i}>: use_tptp
 # OASIS_STOP
+true: use_menhir
+"src/tptp_parser.mly": pkg_zarith

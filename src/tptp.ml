@@ -23,7 +23,7 @@ let read input =
   with
     | Failure s ->
         raise (Parse_error (input.in_lexbuf.Lexing.lex_curr_p, s))
-    | Parsing.Parse_error ->
+    | Tptp_parser.Error ->
         raise (Parse_error (input.in_lexbuf.Lexing.lex_curr_p, "Syntax error"))
 
 let close_in input = input.in_closed <- true
