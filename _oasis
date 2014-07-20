@@ -12,7 +12,7 @@ BuildTools: ocamlbuild
 Description:
   tptp is a library for reading and writing FOF and CNF formulas
   in TPTP format. Library can process all problems and axioms from
-  TPTP 6.0.0 which don't contain line starting with "thf(" or "tff(".
+  TPTP 6.1.0 which don't contain line starting with "thf(" or "tff(".
 
 Library tptp
   Path: src
