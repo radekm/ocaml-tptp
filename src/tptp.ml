@@ -1,7 +1,19 @@
-(* Copyright (c) 2012-2013 Radek Micek *)
+(* Copyright (c) 2012-2014 Radek Micek *)
 
 exception Input_closed
 exception Parse_error of Lexing.position * string
+
+let _ =
+  let print_parse_error = function
+    | Parse_error (p, msg) ->
+        let open Lexing in
+        let s =
+          Printf.sprintf
+            "Tptp.Parse_error: file \"%s\", line %d, column %d: %s"
+            p.pos_fname p.pos_lnum (p.pos_cnum - p.pos_bol) msg in
+        Some s
+    | _ -> None in
+  Printexc.register_printer print_parse_error
 
 type input = {
   in_lexbuf : Lexing.lexbuf;

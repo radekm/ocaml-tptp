@@ -889,7 +889,13 @@ let parse_tptp_problem file =
         with_dispose
           Tptp.close_in
           (parse_all [])
-          (Tptp.create_in (Lexing.from_channel in_chan)))
+          begin
+            let module L = Lexing in
+            let lexbuf = L.from_channel in_chan in
+            let pos = { lexbuf.L.lex_curr_p with L.pos_fname = file } in
+            lexbuf.L.lex_curr_p <- pos;
+            Tptp.create_in lexbuf
+          end)
       (open_in file) in
 
   (* Write items to string. *)
@@ -938,9 +944,9 @@ let parse_tptp_problems dir =
           print_string ".";
           flush stdout
         with
-          | Tptp.Parse_error (_, msg) ->
+          | Tptp.Parse_error _ as e ->
               incr nfailed;
-              Printf.printf "\n%s: %s\n" i msg;
+              Printf.printf "\n%s: %s\n" i (Printexc.to_string e);
               flush stdout
           | Tptp_input_not_preserved ->
               incr nfailed;
