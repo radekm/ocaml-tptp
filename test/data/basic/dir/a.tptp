@@ -1,0 +1,4 @@
+include('b.tptp', [a]).
+fof(a, lemma, a).
+fof(b, lemma, b).
+fof(c, lemma, c).

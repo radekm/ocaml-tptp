@@ -1,0 +1,3 @@
+% In 'basic/a.tptp'
+include('dir/a.tptp', [a, b, a]).
+include('dir/c.tptp').

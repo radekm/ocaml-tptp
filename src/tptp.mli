@@ -21,6 +21,8 @@ exception Input_closed
 
 exception Parse_error of Lexing.position * string
 
+exception Include_error of Lexing.position * string
+
 type input
 
 val create_in : Lexing.lexbuf -> input
@@ -43,3 +45,38 @@ val write :
   ?rfrac:float -> ?width:int -> Buffer.t -> Tptp_ast.tptp_input -> unit
 
 val to_string : Tptp_ast.tptp_input -> string
+
+module File : sig
+  (** Closes the file after the function terminates. *)
+  val with_file : string -> (input -> 'a) -> 'a
+
+  (** Reads TPTP inputs from the file. Includes are automatically resolved.
+
+     Included files with a relative path are searched in the directory
+     of the file they're included from, or if not found there
+     then in [base_dir].
+
+     Raises [Include_error] if an included file is not found.
+
+     If an include is given without a formula selection then
+     all formulas from the file are included.
+     If an include is given with a formula selection
+     then only selected formulas are included.
+
+     If a formula selection contains [i] occurences of the name [n]
+     then the included file must contain exactly [i] formulas
+     with the name [n] otherwise [Include_error] is raised.
+  *)
+  val read : ?base_dir:string -> string -> Tptp_ast.tptp_input list
+
+  (** Calls the function for each TPTP input in the file.
+
+     Includes are treated the same way as in [read].
+  *)
+  val iter :
+    ?base_dir:string -> (Tptp_ast.tptp_input -> unit) -> string -> unit
+
+  (** [write file inputs] writes TPTP [inputs] to [file]. *)
+  val write :
+    ?rfrac:float -> ?width:int -> string -> Tptp_ast.tptp_input list -> unit
+end

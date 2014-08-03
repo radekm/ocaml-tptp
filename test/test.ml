@@ -3,6 +3,8 @@
 open OUnit
 open Tptp_ast
 
+let data_dir = "data/"
+
 let with_dispose dispose f x =
   let result =
     try
@@ -779,6 +781,50 @@ let test_print_cnf () =
 
   assert_equal str (Tptp.to_string ast)
 
+let test_read_file_with_includes () =
+  let ast = Tptp.File.read (data_dir ^ "basic.exp") in
+  let real_ast =
+    Tptp.File.read
+      ~base_dir:(data_dir ^ "basic/base-dir")
+      (data_dir ^ "basic.in") in
+  assert_equal ast real_ast
+
+let test_read_file_included_file_not_found () =
+  let file = data_dir ^ "file-not-found.in" in
+  let pos =
+    let open Lexing in
+    { pos_fname = file; pos_lnum = 2; pos_bol = 37; pos_cnum = 70 } in
+  assert_raises
+    (Tptp.Include_error (pos, "File not found"))
+    (fun () -> Tptp.File.read file)
+
+let test_read_file_formula_not_included () =
+  let file = data_dir ^ "formula-not-included.in" in
+  let pos =
+    let open Lexing in
+    { pos_fname = file; pos_lnum = 2; pos_bol = 37; pos_cnum = 81 } in
+  assert_raises
+    (Tptp.Include_error (pos, "Formula \"b\" not included"))
+    (fun () -> Tptp.File.read file)
+
+let test_read_file_formula_already_included () =
+  let pos =
+    let open Lexing in
+    let pos_fname = data_dir ^ "formula-already-included/a.tptp" in
+    { pos_fname; pos_lnum = 2; pos_bol = 18; pos_cnum = 36 } in
+  let file = data_dir ^ "formula-already-included.in" in
+  assert_raises
+    (Tptp.Include_error (pos, "Formula \"a\" already included"))
+    (fun () -> Tptp.File.read file)
+
+let test_write_file () =
+  let ast = Tptp.File.read (data_dir ^ "basic.exp") in
+  let tmp = Filename.temp_file "ocaml-tptp-test" "" in
+  Tptp.File.write tmp ast;
+  let real_ast = Tptp.File.read tmp in
+  Sys.remove tmp;
+  assert_equal ast real_ast
+
 let suite =
   "suite" >:::
     [
@@ -843,6 +889,14 @@ let suite =
       "to_comment_line rejects invalid string" >::
         test_to_comment_line_rejects_invalid_str;
       "print CNF" >:: test_print_cnf;
+      "read file with includes" >:: test_read_file_with_includes;
+      "read file - included file not found" >::
+        test_read_file_included_file_not_found;
+      "read file - formula not included" >::
+        test_read_file_formula_not_included;
+      "read file - formula already included" >::
+        test_read_file_formula_already_included;
+      "write file" >:: test_write_file;
     ]
 
 (* ************************************************************************* *)

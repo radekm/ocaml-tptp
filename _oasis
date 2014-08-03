@@ -36,3 +36,4 @@ Executable test
 
 Test main
   Command: $test
+  WorkingDirectory: test

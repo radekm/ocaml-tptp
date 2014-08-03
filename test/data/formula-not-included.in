@@ -1,0 +1,16 @@
+/* Copyright (c) 2014 Radek Micek */
+include('formula-not-included/a.tptp', [b]).
+
+/*
+
+The file 'formula-not-included/a.tptp' is empty.
+
+What is tested:
+
+- If a formula selection contains n occurences of some name then
+  the included file must contain exactly n formulas with that name.
+
+  - An exception is raised since the formula selection contains 1 occurence
+    of the name b but the included file contains no formulas with the name b.
+
+*/

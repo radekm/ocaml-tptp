@@ -1,0 +1,7 @@
+/* Copyright (c) 2014 Radek Micek */
+% In 'basic.in'
+cnf(a, axiom, a).
+fof(a, lemma, a).
+fof(b, lemma, b).
+fof(c, axiom, c).
+fof(p, axiom, p).

@@ -1,0 +1,60 @@
+/* Copyright (c) 2014 Radek Micek */
+% In 'basic.in'
+include('basic/a.tptp').
+fof(p, axiom, p).
+
+/*
+
+When reading this file set base-dir to 'basic/base-dir'.
+
+Content of 'basic/base-dir/dir/a.tptp':
+
+  fof(d, axiom, d).
+
+Content of 'basic/base-dir/dir/c.tptp':
+
+  fof(c, axiom, c).
+
+Content of 'basic/dir/a.tptp':
+
+  include('b.tptp', [a]).
+  fof(a, lemma, a).
+  fof(b, lemma, b).
+  fof(c, lemma, c).
+
+Content of 'basic/dir/b.tptp':
+
+  cnf(a, axiom, a).
+  cnf(b, axiom, b).
+  cnf(b, axiom, ~b).
+
+Content of 'basic/a.tptp':
+
+  % In 'basic/a.tptp'
+  include('dir/a.tptp', [a, b, a]).
+  include('dir/c.tptp').
+
+What is tested:
+
+- Only formulas are included.
+
+  - The comment from 'basic/a.tptp' is not included.
+
+- An include without a formula selection includes all formulas from the file.
+
+- An include with a formula selection includes only the selected formulas.
+
+  - The formula selection [a, b, a] includes 2 formulas with the name a
+    and 1 formula with the name b.
+
+- Included files with a relative path are searched in the directory
+  of the file they're included from, or if not found there then in base-dir.
+
+  - The included file 'dir/a.tptp' is resolved to 'basic/dir/a.tptp'
+    and not to 'basic/base-dir/dir/a.tptp'.
+  - The included file 'dir/c.tptp' is resolved to 'basic/base-dir/dir/c.tptp'
+    since the file 'basic/dir/c.tptp' doesn't exist.
+
+- Included files can themselves contain includes.
+
+*/

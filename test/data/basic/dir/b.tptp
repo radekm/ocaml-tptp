@@ -1,0 +1,3 @@
+cnf(a, axiom, a).
+cnf(b, axiom, b).
+cnf(b, axiom, ~b).
