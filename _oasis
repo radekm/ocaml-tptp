@@ -33,6 +33,7 @@ Executable test
   BuildDepends: tptp, zarith, oUnit
   Install: false
   Build$: flag(tests)
+  CompiledObject: Best
 
 Test main
   Command: $test
