@@ -1016,6 +1016,48 @@ let parse_tptp_problems dir =
   Printf.printf "Skipped %d problems\n" !nskipped
 
 (* ************************************************************************* *)
+(* Parsing TPTP problems in given directory with included files *)
+
+let parse_tptp_problem_inc base_dir file =
+  Tptp.File.iter ?base_dir ignore file
+
+let parse_tptp_problems_inc base_dir dir =
+  let nparsed = ref 0 in
+  let nparse_errors = ref 0 in
+  let nother_errors = ref 0 in
+
+  let rec parse_dir dir =
+    let items = Sys.readdir dir in
+    Array.iter (fun i ->
+      let i = Filename.concat dir i in
+      if Sys.is_directory i then
+        parse_dir i
+      else begin
+        try
+          parse_tptp_problem_inc base_dir i;
+          incr nparsed;
+          print_string ".";
+          flush stdout
+        with
+          | Tptp.Parse_error _ ->
+              incr nparse_errors;
+              print_string "P";
+              flush stdout
+          | e ->
+              incr nother_errors;
+              Printf.printf "\n%s: %s\n" i (Printexc.to_string e);
+              flush stdout
+      end) items in
+
+  parse_dir dir;
+
+  print_newline ();
+  Printf.printf "Parsed %d problems\n" !nparsed;
+  Printf.printf
+    "Parse errors %d (expected for THF and TFF problems)\n" !nparse_errors;
+  Printf.printf "Other errors %d\n" !nother_errors
+
+(* ************************************************************************* *)
 (* Parsing TPTP input from string *)
 
 let parse_tptp_string str =
@@ -1048,13 +1090,22 @@ let parse_tptp_string str =
 (* Main *)
 
 let () =
+  let base_dir = ref None in
   let dir = ref None in
+  let inc = ref None in
   let str = ref None in
   Arg.parse
     [
+      "-b",
+      Arg.String (fun s -> base_dir := Some s),
+      "<dir>  Base directory";
       "-d",
       Arg.String (fun s -> dir := Some s),
       "<dir>  Parse problems in directory <dir> and its subdirectories";
+      "-i",
+      Arg.String (fun s -> inc := Some s),
+      "<dir>  Parse problems in directory <dir> and its subdirectories;\n" ^
+      "            included files are parsed too";
       "-s",
       Arg.String (fun s -> str := Some s),
       "<str>  Parse string <str> and then pretty-print it";
@@ -1066,6 +1117,11 @@ let () =
     | Some d ->
         Printf.printf "Parsing problems in %s\n" d;
         parse_tptp_problems d
+    | None ->
+  match !inc with
+    | Some d ->
+        Printf.printf "Parsing problems in %s with included files\n" d;
+        parse_tptp_problems_inc !base_dir d
     | None ->
   match !str with
     | Some s ->
