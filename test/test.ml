@@ -918,8 +918,6 @@ let exists_line f file =
     | End_of_file -> false
     | Line_found -> true
 
-let combine_path a b = a ^ "/" ^ b
-
 let is_prefix_of pref str =
   let pref_len = String.length pref in
   let str_len = String.length str in
@@ -984,7 +982,7 @@ let parse_tptp_problems dir =
   let rec parse_dir dir =
     let items = Sys.readdir dir in
     Array.iter (fun i ->
-      let i = combine_path dir i in
+      let i = Filename.concat dir i in
       if Sys.is_directory i then
         parse_dir i
       else if thf_or_tff_file i then begin
