@@ -184,7 +184,7 @@ rule token inside = parse
       { RATIONAL (Q.of_string (Lexing.lexeme lexbuf)) }
   | sign? decimal '.' ['0'-'9']+
       { REAL (parse_decimal_fraction (Lexing.lexeme lexbuf)) }
-  | sign? decimal ('.' ['0'-'9']+)? ['e' 'E'] integer
+  | sign? decimal ('.' ['0'-'9']+)? ['e' 'E'] sign? ['0'-'9']+
       { REAL (parse_floating_point_number (Lexing.lexeme lexbuf)) }
   | ['\t' ' ']+
       { token inside lexbuf }

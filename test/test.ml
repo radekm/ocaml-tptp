@@ -280,6 +280,7 @@ let test_parse_real_with_exp () =
     "cnf(a, theorem, -37.2e-1 = -0.372e1).";
     "cnf(b, theorem, +372e-2 = 3.72e0).";
     "cnf(c, theorem, 0.0e+2 = 0).";
+    "cnf(d, theorem, 0e+02 = 0).";
   ] in
 
   let x = Number (Q.of_ints ~-372 100) in
@@ -301,6 +302,12 @@ let test_parse_real_with_exp () =
     };
     Cnf_anno {
       af_name = N_word (to_plain_word "c");
+      af_role = R_theorem;
+      af_formula = Clause [ Lit (Pos, Equals (z, z)) ];
+      af_annos = None;
+    };
+    Cnf_anno {
+      af_name = N_word (to_plain_word "d");
       af_role = R_theorem;
       af_formula = Clause [ Lit (Pos, Equals (z, z)) ];
       af_annos = None;
