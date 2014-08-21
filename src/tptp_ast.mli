@@ -31,6 +31,7 @@ and formula_role =
   | R_assumption
   | R_lemma
   | R_theorem
+  | R_corollary
   | R_conjecture
   | R_negated_conjecture
   | R_plain

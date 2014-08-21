@@ -81,6 +81,7 @@ let show_formula_role = function
   | R_assumption -> "assumption"
   | R_lemma -> "lemma"
   | R_theorem -> "theorem"
+  | R_corollary -> "corollary"
   | R_conjecture -> "conjecture"
   | R_negated_conjecture -> "negated_conjecture"
   | R_plain -> "plain"

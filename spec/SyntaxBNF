@@ -1,4 +1,4 @@
-%----v6.0.0.0 (TPTP version.internal development number)
+%----v6.1.0.0 (TPTP version.internal development number)
 %------------------------------------------------------------------------------
 %----README ... this header provides important meta- and usage information
 %----
@@ -55,9 +55,9 @@
 %----compatibility.
 <formula_role>       ::= <lower_word>
 <formula_role>       :== axiom | hypothesis | definition | assumption |
-                         lemma | theorem | conjecture | negated_conjecture |
-                         plain | fi_domain | fi_functors | fi_predicates |
-                         type | unknown
+                         lemma | theorem | corollary | conjecture | 
+                         negated_conjecture | plain | fi_domain | fi_functors |
+                         fi_predicates | type | unknown
 %----"axiom"s are accepted, without proof. There is no guarantee that the
 %----axioms of a problem are consistent.
 %----"hypothesis"s are assumed to be true for a particular problem, and are

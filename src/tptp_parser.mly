@@ -11,6 +11,7 @@ let string_to_role : string -> formula_role = function
   | "assumption" -> R_assumption
   | "lemma" -> R_lemma
   | "theorem" -> R_theorem
+  | "corollary" -> R_corollary
   | "conjecture" -> R_conjecture
   | "negated_conjecture" -> R_negated_conjecture
   | "plain" -> R_plain
