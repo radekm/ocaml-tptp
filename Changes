@@ -1,0 +1,23 @@
+tptp 0.3.1
+----------
+
+- Reading TPTP files with automatic include resolution
+  and writing TPTP files (module Tptp.File).
+- Allow exponents starting with zeros when reading reals.
+- Replace ocamlyacc by Menhir.
+
+tptp 0.3.0
+----------
+
+- Pretty-printing of TPTP formulas.
+- fof, cnf and include aren't keywords in formulas.
+
+tptp 0.2.0
+----------
+
+- Printing of TPTP formulas.
+
+tptp 0.1.0
+----------
+
+- Initial release.
