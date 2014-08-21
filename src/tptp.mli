@@ -1,4 +1,4 @@
-(* Copyright (c) 2012-2013 Radek Micek *)
+(* Copyright (c) 2012-2014 Radek Micek *)
 
 (** Reading and writing FOF and CNF formulas in TPTP format.
 
