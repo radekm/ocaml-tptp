@@ -148,6 +148,8 @@ module File = struct
 
   end
 
+  let (|>) x f = f x
+
   let find_included_file ?base_dir included_from file =
     let paths =
       if Filename.is_relative file then
