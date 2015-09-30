@@ -200,13 +200,11 @@ module File = struct
     iter ?base_dir (fun x -> xs := x :: !xs) file;
     List.rev !xs
 
-  let write_channel ?(rfrac = 1.) ?(width = 80) inputs out =
-    let b = Buffer.create 200 in
+  let write_channel ~rfrac ~width inputs out =
     List.iter
       (fun tptp_input ->
-        write ~rfrac ~width b tptp_input;
-        Buffer.output_buffer out b;
-        Buffer.clear b)
+        PPrint.ToChannel.pretty rfrac width out
+          (Tptp_printer.print_tptp_input tptp_input))
       inputs
 
   let write ?(rfrac = 1.) ?(width = 80) file inputs =
