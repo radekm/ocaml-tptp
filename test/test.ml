@@ -1,4 +1,4 @@
-(* Copyright (c) 2012-2014 Radek Micek *)
+(* Copyright (c) 2012-2015 Radek Micek *)
 
 open OUnit
 open Tptp_ast
@@ -33,17 +33,28 @@ let parse_string str = parse_lexbuf (Lexing.from_string str)
 
 let assert_parses ast str =
   let real_ast, real_exn = parse_string str in
-  assert_equal ast real_ast;
   match real_exn with
-    | None -> ()
+    | None -> assert_equal ast real_ast
     | Some e -> raise e
 
 let assert_parses_and_raises ast str =
   let real_ast, real_exn = parse_string str in
-  assert_equal ast real_ast;
   match real_exn with
     | None -> assert_failure "No exception raised"
-    | Some (Tptp.Parse_error (_, _)) -> ()
+    | Some (Tptp.Parse_error (_, _)) -> assert_equal ast real_ast
+    | Some e -> raise e
+
+(* Uses [tptp_input_equal] instead of [(=)] to prevent [Out of memory]
+   exception because of [Stack overflow in structural comparison].
+*)
+let assert_parses_deep ast str =
+  let real_ast, real_exn = parse_string str in
+  let rec cmp xs ys =
+    match xs, ys with
+      | x :: xs, y :: ys -> tptp_input_equal x y && cmp xs ys
+      | _ -> xs = ys in
+  match real_exn with
+    | None -> assert_equal ~cmp ast real_ast
     | Some e -> raise e
 
 let assert_raises_failure (f : unit -> 'a) : unit =
@@ -788,6 +799,118 @@ let test_print_cnf () =
 
   assert_equal str (Tptp.to_string ast)
 
+let test_tptp_input_equal () =
+  let parse_single str =
+    match parse_string str with
+      | [ast], None -> ast
+      | _ -> failwith "parse_single" in
+  let ast1 = parse_single "fof(comm, axiom, p | f(X, Y) = f(Y, X))." in
+  let ast2 = parse_single "fof(comm, axiom, p | f(X, Y) = f(Z, X))." in
+  assert_equal (tptp_input_equal ast1 ast2) false
+
+(* Pretty-printing and parsing should be tail-recursive. *)
+let test_deep_term () =
+  let term =
+    let f a = Func (Plain_word (to_plain_word "f"), [a]) in
+    let x = Var (to_var "X") in
+    let t = ref x in
+    for i = 1 to 10_000_000 do
+      t := f !t
+    done;
+    !t in
+  let atom = Pred (Plain_word (to_plain_word "p"), [term]) in
+  let ast =
+    Fof_anno {
+      af_name = N_word (to_plain_word "deep");
+      af_role = R_axiom;
+      af_formula = Formula (Atom atom);
+      af_annos = None;
+    } in
+  let str = Tptp.to_string ast in
+  (* [assert_parses] isn't sufficient. *)
+  assert_parses_deep [ast] str
+
+let test_deep_fof () =
+  let atom = Atom (Pred (Plain_word (to_plain_word "p"), [])) in
+  let build ~depth op =
+    let f = ref atom in
+    for i = 1 to depth do
+      f := op !f
+    done;
+    Fof_anno {
+      af_name = N_word (to_plain_word "deep");
+      af_role = R_axiom;
+      af_formula = Formula !f;
+      af_annos = None;
+    } in
+  let test ~depth op =
+    let ast = build ~depth op in
+    let str = Tptp.to_string ast in
+    assert_parses_deep [ast] str in
+  (* Unary connective. *)
+  test ~depth:10_000_000 (fun f -> Not f);
+  (* Binary connective, left-associated.
+
+     Note: [assert_parses] isn't sufficient.
+  *)
+  test ~depth:10_000_000 (fun f -> Binop (And, f, atom));
+  (* Binary connective, right-associated.
+
+     Note: Depth is not [10_000_000] since the length
+     of the pretty-printed right-associated formula
+     is asymptotically quadratic. The reason is
+     that the [i]-th line is indented by [2*i] spaces.
+  *)
+  test ~depth:40_000 (fun f -> Binop (And, atom, f));
+  (* Single quantifier. *)
+  test ~depth:10_000_000 (fun f -> Quant (All, to_var "X", f));
+  (* Alternating quantifiers. *)
+  test ~depth:10_000_000
+    (let q = ref All in
+     fun f ->
+       q :=
+         (match !q with
+           | All -> Exists
+           | Exists -> All);
+       Quant (!q, to_var "X", f))
+
+let test_deep_cnf () =
+  let atom = Pred (Plain_word (to_plain_word "p"), []) in
+  let clause =
+    let lits = ref [] in
+    for i = 1 to 10_000_000 do
+      lits := Lit (Pos, atom) :: !lits
+    done;
+    Clause !lits in
+  let ast =
+    Cnf_anno {
+      af_name = N_word (to_plain_word "deep");
+      af_role = R_axiom;
+      af_formula = clause;
+      af_annos = None;
+    } in
+  let str = Tptp.to_string ast in
+  assert_parses [ast] str
+
+let test_deep_gterm () =
+  let gterm =
+    let gterm = ref (G_data (G_var (to_var "Y"))) in
+    let f = to_plain_word "f" in
+    for i = 1 to 10_000_000 do
+      gterm := G_data (G_func (f, [G_data (G_var (to_var "X")); !gterm]))
+    done;
+    !gterm in
+  let ast =
+    Cnf_anno {
+      af_name = N_word (to_plain_word "deep");
+      af_role = R_axiom;
+      af_formula = Clause [];
+      af_annos = Some { a_source = gterm; a_useful_info = [] };
+    } in
+  let str = Tptp.to_string ast in
+  (* [assert_parses] isn't sufficient. *)
+  assert_parses_deep [ast] str
+
 let test_read_file_with_includes () =
   let ast = Tptp.File.read (data_dir ^ "basic.exp") in
   let real_ast =
@@ -896,6 +1019,11 @@ let suite =
       "to_comment_line rejects invalid string" >::
         test_to_comment_line_rejects_invalid_str;
       "print CNF" >:: test_print_cnf;
+      "tptp_input_equal" >:: test_tptp_input_equal;
+      "deep term" >:: test_deep_term;
+      "deep FOF" >:: test_deep_fof;
+      "deep CNF" >:: test_deep_cnf;
+      "deep gterm" >:: test_deep_gterm;
       "read file with includes" >:: test_read_file_with_includes;
       "read file - included file not found" >::
         test_read_file_included_file_not_found;

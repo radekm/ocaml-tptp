@@ -1,4 +1,4 @@
-(* Copyright (c) 2013-2014 Radek Micek *)
+(* Copyright (c) 2013-2015 Radek Micek *)
 
 open Tptp_ast
 
@@ -7,6 +7,22 @@ module PP = PPrint
 let (^^) = PP.(^^)
 
 (* ************************************************************************ *)
+
+let print_list_k ldelim rdelim sep items p k =
+  (* [sep] precedes each item. *)
+  let rec print_all_except_first items k =
+    match items with
+      | [] -> k PP.empty
+      | x :: xs ->
+          p x (fun x ->
+          print_all_except_first xs (fun xs ->
+          k (PP.string sep ^^ x ^^ xs))) in
+  match items with
+    | [] -> k (PP.string ldelim ^^ PP.string rdelim)
+    | x :: xs ->
+        p x (fun x ->
+        print_all_except_first xs (fun xs ->
+        k (PP.string ldelim ^^ x ^^ xs ^^ PP.string rdelim)))
 
 let print_list ldelim rdelim sep items p =
   PP.string ldelim ^^
@@ -108,16 +124,18 @@ let rec print_fof_formula = function
   | Formula f ->
       print_formula ~form:F_any f
 
-and print_formula ?(form = F_unitary) = function
-  | Binop (op, f, f') ->
-      let l =
-        let form =
-          match op with
-            | Equiv | Implies | Implies_rev | Xor | Nor | Nand -> F_unitary
-            | Or -> F_or
-            | And -> F_and in
-        print_formula ~form f in
-      let r = print_formula f' in
+and print_formula ?(form = F_unitary) formula =
+  print_formula_k ~form formula (fun x -> x)
+
+and print_formula_k ?(form = F_unitary) formula k = match formula with
+  | Binop (op, l, r) ->
+      let form_l =
+        match op with
+          | Equiv | Implies | Implies_rev | Xor | Nor | Nand -> F_unitary
+          | Or -> F_or
+          | And -> F_and in
+      print_formula_k ~form:form_l l (fun l ->
+      print_formula_k r (fun r ->
       let wrap =
         match op, form with
           (* No parens around resulting formula. *)
@@ -133,12 +151,13 @@ and print_formula ?(form = F_unitary) = function
           | Nand -> "~&"
           | Or -> "|"
           | And -> "&" in
-      wrap (PP.infix 2 1 (PP.string op) l r)
+      let f = wrap (PP.infix 2 1 (PP.string op) l r) in
+      k f))
   | Not (Atom (Equals (l, r))) ->
-      print_equals_fol Neg l r
+      k (print_equals_fol Neg l r)
   | Not f ->
-      PP.tilde ^^
-      print_formula f
+      print_formula_k f (fun f ->
+      k (PP.tilde ^^ f))
   | Quant (q, _, _) as f ->
       (* [vars] - consecutive variables quantified by [q]. *)
       let vars, f =
@@ -146,16 +165,18 @@ and print_formula ?(form = F_unitary) = function
           | Quant (q', x, f) when q = q' -> group_vars (x :: xs) f
           | f -> (List.rev xs, f) in
         group_vars [] f in
-      PP.char
-        begin match q with
-          | All -> '!'
-          | Exists -> '?'
-        end ^^
-      print_list "[" "]" ", " vars (fun v -> PP.string (show_var v)) ^^
-      PP.string " : " ^^
-      print_formula f
+      print_formula_k f (fun f ->
+      let f =
+        PP.char
+          begin match q with
+            | All -> '!'
+            | Exists -> '?'
+          end ^^
+        print_list "[" "]" ", " vars (fun v -> PP.string (show_var v)) ^^
+        PP.string " : " ^^ f in
+      k f)
   | Atom a ->
-      print_atom a
+      k (print_atom a)
 
 and print_cnf_formula (Clause lits) =
   match lits with
@@ -195,16 +216,20 @@ and print_atom = function
         | _ -> print_list "(" ")" ", " args print_term
       end
 
-and print_term = function
-  | Var v -> PP.string (show_var v)
+and print_term term = print_term_k term (fun x -> x)
+
+and print_term_k term k = match term with
+  | Var v -> k (PP.string (show_var v))
   | Func (f, args) ->
-      PP.string (show_atomic_word f) ^^
+      let f = PP.string (show_atomic_word f) in
       begin match args with
-        | [] -> PP.empty
-        | _ -> print_list "(" ")" ", " args print_term
+        | [] -> k f
+        | _ ->
+            print_list_k "(" ")" ", " args print_term_k (fun args ->
+            k (f ^^ args))
       end
-  | Number n -> PP.string (show_number n)
-  | String s -> PP.string (show_tptp_string s)
+  | Number n -> k (PP.string (show_number n))
+  | String s -> k (PP.string (show_tptp_string s))
 
 let rec print_tptp_input node =
   let print_anno_formula kw name role formula print_formula annos =
@@ -250,25 +275,33 @@ let rec print_tptp_input node =
   end ^^
   PP.hardline
 
-and print_gterm = function
-  | G_data d -> print_gdata d
-  | G_cons (d, t) ->
-      print_gdata d ^^
-      PP.string " : " ^^
-      print_gterm t
-  | G_list ts -> print_list "[" "]" ", " ts print_gterm
+and print_gterm gterm =
+  print_gterm_k gterm (fun x -> x)
 
-and print_gdata = function
+and print_gterm_k gterm k = match gterm with
+  | G_data d -> print_gdata_k d k
+  | G_cons (d, t) ->
+      print_gdata_k d (fun d ->
+      print_gterm_k t (fun t ->
+      k (d ^^ PP.string " : " ^^ t)))
+  | G_list ts -> print_list_k "[" "]" ", " ts print_gterm_k k
+
+and print_gdata gdata =
+  print_gdata_k gdata (fun x -> x)
+
+and print_gdata_k gdata k = match gdata with
   | G_func (f, args) ->
-      PP.string (show_plain_word f) ^^
+      let f = PP.string (show_plain_word f) in
       begin match args with
-        | [] -> PP.empty
-        | _ -> print_list "(" ")" ", " args print_gterm
+        | [] -> k f
+        | _ ->
+            print_list_k "(" ")" ", " args print_gterm_k (fun args ->
+            k (f ^^ args))
       end
-  | G_var v -> PP.string (show_var v)
-  | G_number n -> PP.string (show_number n)
-  | G_string s -> PP.string (show_tptp_string s)
-  | G_formula f -> print_gformula f
+  | G_var v -> k (PP.string (show_var v))
+  | G_number n -> k (PP.string (show_number n))
+  | G_string s -> k (PP.string (show_tptp_string s))
+  | G_formula f -> k (print_gformula f)
 
 and print_gformula = function
   | G_fof f ->

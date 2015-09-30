@@ -1,4 +1,4 @@
-(* Copyright (c) 2012, 2014 Radek Micek *)
+(* Copyright (c) 2012, 2014-15 Radek Micek *)
 
 type tptp_input =
   | Fof_anno of fof_formula annotated_formula
@@ -183,3 +183,97 @@ let to_tptp_string str =
 
 let to_comment_line str =
   check_suffix 0 (fun c -> (c >= '\032' && c <= '\126') || c = '\t') str
+
+(* ************************************************************************* *)
+(* Equality *)
+
+let rec list_equal eq xs ys k =
+  match xs, ys with
+    | x :: xs, y :: ys -> eq x y (fun () -> list_equal eq xs ys k)
+    (* [(=)] won't cause stack overflow for the remaining cases. *)
+    | _ -> xs = ys && k ()
+
+let rec term_equal x x' k =
+  match x, x' with
+    | Func (f, args), Func (f', args') ->
+        f = f' && list_equal term_equal args args' k
+    (* [(=)] won't cause stack overflow for the remaining cases. *)
+    | _ -> x = x' && k ()
+
+let atom_equal x x' k =
+  match x, x' with
+    | Equals (l, r), Equals (l', r') ->
+        term_equal l l' (fun () -> term_equal r r' k)
+    | Pred (p, args), Pred (p', args') ->
+        p = p' && list_equal term_equal args args' k
+    | _ -> false
+
+let literal_equal x x' k =
+  match x, x' with
+    | Lit (s, a), Lit (s', a') -> s = s' && atom_equal a a' k
+
+let cnf_formula_equal x x' k =
+  match x, x' with
+    | Clause lits, Clause lits' -> list_equal literal_equal lits lits' k
+
+let rec formula_equal x x' k =
+  match x, x' with
+    | Binop (op, l, r), Binop (op', l', r') ->
+        op = op' && formula_equal l l' (fun () -> formula_equal r r' k)
+    | Not f, Not f' -> formula_equal f f' k
+    | Quant (q, x, f), Quant (q', x', f') ->
+        q = q' && x = x' && formula_equal f f' k
+    | Atom a, Atom a' -> atom_equal a a' k
+    | _ -> false
+
+let fof_formula_equal x x' k =
+  match x, x' with
+    | Sequent (xs, ys), Sequent (xs', ys') ->
+        list_equal formula_equal xs xs' (fun () ->
+        list_equal formula_equal ys ys' k)
+    | Formula f, Formula f' -> formula_equal f f' k
+    | _ -> false
+
+let gformula_equal x x' k =
+  match x, x' with
+    | G_fof f, G_fof f' -> fof_formula_equal f f' k
+    | G_cnf f, G_cnf f' -> cnf_formula_equal f f' k
+    | G_fot t, G_fot t' -> term_equal t t' k
+    | _ -> false
+
+let rec gdata_equal x x' k =
+  match x, x' with
+    | G_func (f, args), G_func (f', args') ->
+        f = f' && list_equal gterm_equal args args' k
+    | G_formula f, G_formula f' -> gformula_equal f f' k
+    (* [(=)] won't cause stack overflow for the remaining cases. *)
+    | _ -> x = x' && k ()
+
+and gterm_equal x x' k =
+  match x, x' with
+    | G_data d, G_data d' -> gdata_equal d d' k
+    | G_cons (d, t), G_cons (d', t') ->
+        gdata_equal d d' (fun () -> gterm_equal t t' k)
+    | G_list ts, G_list ts' -> list_equal gterm_equal ts ts' k
+    | _ -> false
+
+let annotated_formula_equal eq x x' =
+  x.af_name = x'.af_name &&
+  x.af_role = x'.af_role &&
+  eq x.af_formula x'.af_formula (fun () ->
+  match x.af_annos, x'.af_annos with
+    | Some a, Some a' ->
+        gterm_equal a.a_source a'.a_source (fun () ->
+        list_equal gterm_equal a.a_useful_info a'.a_useful_info (fun () ->
+        true))
+    (* [(=)] won't cause stack overflow for the remaining cases. *)
+    | _ -> x.af_annos = x'.af_annos)
+
+let tptp_input_equal x x' =
+  match x, x' with
+    | Fof_anno af, Fof_anno af' ->
+        annotated_formula_equal fof_formula_equal af af'
+    | Cnf_anno af, Cnf_anno af' ->
+        annotated_formula_equal cnf_formula_equal af af'
+    (* [(=)] won't cause stack overflow for the remaining cases. *)
+    | _ -> x = x'

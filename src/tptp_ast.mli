@@ -1,4 +1,4 @@
-(* Copyright (c) 2012-2013 Radek Micek *)
+(* Copyright (c) 2012-2013, 2015 Radek Micek *)
 
 (** AST for FOF and CNF formulas. *)
 
@@ -175,3 +175,6 @@ val to_tptp_string : string -> tptp_string
 
 (** Raises [Failure] when the string is invalid. *)
 val to_comment_line : string -> comment_line
+
+(** Useful when [(=)] causes stack overflow. *)
+val tptp_input_equal : tptp_input -> tptp_input -> bool

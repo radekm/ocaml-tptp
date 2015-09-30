@@ -1,8 +1,12 @@
-/* Copyright (c) 2012 Radek Micek */
+/* Copyright (c) 2012, 2015 Radek Micek */
 
 %{
 
 open Tptp_ast
+
+(* Tail-recursive. *)
+let fold_right f xs acc =
+  List.fold_left (fun acc x -> f x acc) acc (List.rev xs)
 
 let string_to_role : string -> formula_role = function
   | "axiom" -> R_axiom
@@ -152,7 +156,7 @@ fof_unitary_formula:
 
 fof_quantified_formula:
 | fol_quantifier LBRKT fof_variable_list RBRKT COLON fof_unitary_formula
-    { List.fold_right (fun x f -> Quant ($1, x, f)) $3 $6 }
+    { fold_right (fun x f -> Quant ($1, x, f)) $3 $6 }
 
 fof_variable_list:
 | variable
