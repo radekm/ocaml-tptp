@@ -1,4 +1,5 @@
 %----v6.1.0.0 (TPTP version.internal development number)
+%----v6.1.0.1 - Allow leading zeros in exponents, via <exp_integer>
 %------------------------------------------------------------------------------
 %----README ... this header provides important meta- and usage information
 %----
@@ -109,6 +110,8 @@
 <thf_unitary_formula> ::= <thf_quantified_formula> | <thf_unary_formula> |
                          <thf_atom> | <thf_conditional> | <thf_let> |
                          (<thf_logic_formula>)
+%----Note that <thf_atom> allows <defined_type>s as terms, which will fail
+%----type checking. The user must take care with this liberal syntax!
 <thf_quantified_formula> ::= <thf_quantifier> [<thf_variable_list>] :
                          <thf_unitary_formula>
 %----@ (denoting apply) is left-associative and lambda is right-associative.
@@ -659,9 +662,12 @@
 <unsigned_integer>   ::- <decimal>
 <decimal>            ::- (<zero_numeric>|<positive_decimal>)
 <positive_decimal>   ::- <non_zero_numeric><numeric>*
-<decimal_exponent>   ::- (<decimal>|<decimal_fraction>)<exponent><integer>
+<decimal_exponent>   ::- (<decimal>|<decimal_fraction>)<exponent><exp_integer>
 <decimal_fraction>   ::- <decimal><dot_decimal>
 <dot_decimal>        ::- <dot><numeric><numeric>*
+<exp_integer>        ::- (<signed_exp_integer>|<unsigned_exp_integer>)
+<signed_exp_integer> ::- <sign><unsigned_exp_integer>
+<unsigned_exp_integer> ::- <numeric><numeric>*
 
 %----Character classes
 <percentage_sign>    ::: [%]
